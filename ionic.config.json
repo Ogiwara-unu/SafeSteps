@@ -1,0 +1,7 @@
+{
+  "name": "SafeSteps",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
