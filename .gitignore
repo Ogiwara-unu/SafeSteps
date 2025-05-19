@@ -10,7 +10,7 @@
 
 # Archivos Importantes
 /google-services.json
-.env
+/capacitor.config.ts
 
 # production
 /dist

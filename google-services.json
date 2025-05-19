@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "1043239362944",
-    "project_id": "safesteps-9b79e",
-    "storage_bucket": "safesteps-9b79e.firebasestorage.app"
+    "project_number": "1041794057493",
+    "project_id": "safesteps-1c5db",
+    "storage_bucket": "safesteps-1c5db.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1043239362944:android:7d7d9f2332d4f6565b2165",
+        "mobilesdk_app_id": "1:1041794057493:android:592aa525ac149e86e5d51c",
         "android_client_info": {
-          "package_name": "com.una.safesteps"
+          "package_name": "com.una.trabajo"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAz61nPc0MfdRLHNVT3EweM-rZIkZ9cJOM"
+          "current_key": "AIzaSyDDaLzbigTfQEI4wDbERX71wy_huSvK9FQ"
         }
       ],
       "services": {
