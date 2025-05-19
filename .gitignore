@@ -8,6 +8,10 @@
 # testing
 /coverage
 
+# Archivos Importantes
+/google-services.json
+.env
+
 # production
 /dist
 
