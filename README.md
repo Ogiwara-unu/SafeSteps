@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="safeStepsLogo.png" alt="SafeSteps Logo" width="200" />
+  <img src="Imagotipo" alt="SafeSteps Logo" width="200" />
 </p>
 
 <h1 align="center">SafeSteps</h1>

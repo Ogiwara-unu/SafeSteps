@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { useHistory } from 'react-router-dom'; 
-import { auth } from '../../firebaseConfig';
+import { useHistory } from 'react-router-dom';
+import { signInWithPopup } from 'firebase/auth';
+import { auth,  googleProvider} from '../../firebaseConfig';
 import { createOrUpdateUserDocument } from '../../firebase/createOrUpdateUser';
+
+import './Login'; // usa el mismo CSS del login
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
-  const history = useHistory(); 
+  const [userData, setUserData] = useState<any>(null);
+  const history = useHistory();
 
   const handleRegister = async () => {
     try {
@@ -21,40 +25,78 @@ export default function Register() {
 
       await createOrUpdateUserDocument(userCredential.user, 'password', password);
 
-      history.push('/login'); 
+      history.push('/login');
     } catch (err: any) {
       setError(err.message);
     }
   };
+    const goToLogin = () => {
+    history.push('/login');
+  };
+   const handleGoogleLogin = async () => {
+      setError('');
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        const token = await createOrUpdateUserDocument(user, 'google');
+        const fullUser = {
+          email: user.email,
+          uid: user.uid,
+          provider: 'google',
+          token,
+        };
+        setUserData(fullUser);
+        history.push('/home');
+      } catch (err: any) {
+        setError(err.message);
+      }
+    };
 
   return (
-    <div className="p-4 space-y-4">
-      <h2 className="text-xl font-bold">Registro</h2>
-      <input
-        type="text"
-        placeholder="Nombre completo"
-        value={displayName}
-        onChange={(e) => setDisplayName(e.target.value)}
-        className="border p-2 w-full"
-      />
-      <input
-        type="email"
-        placeholder="Correo"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="border p-2 w-full"
-      />
-      <input
-        type="password"
-        placeholder="Contraseña"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="border p-2 w-full"
-      />
-      <button onClick={handleRegister} className="bg-blue-500 text-white p-2 rounded w-full">
-        Registrarse
-      </button>
-      {error && <p className="text-red-500">{error}</p>}
+    <div className="login-container">
+      <div className="login-card">
+        <img src="../assets/Imagotipo.png" alt="Logo" className="logo" />
+
+        <h2 className="login-title">¡Bienvenido!</h2>
+        <p className="login-subtitle">¿Aún no tienes cuenta? Regístrate y empieza a disfrutar de todos nuestros servicios.</p>
+        <label className='label-field'>Nombre</label>
+        <input
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          className="input-field"
+        />
+        <label className='label-field'>Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="input-field"
+        />
+        <label className='label-field'>Contraseña</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input-field"
+        />
+
+        <button onClick={handleRegister} className="login-button">
+          Registrarse
+        </button>
+
+        {error && <p className="error-message">{error}</p>}
+
+       <div className="login-footer-row">
+          <button className="google-button-inline" onClick={handleGoogleLogin}>
+            Registrarse con Google
+          </button>
+          <span className="separator">|</span>
+          <button className="register-button-inline" onClick={goToLogin}>
+            Iniciar Sesión
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

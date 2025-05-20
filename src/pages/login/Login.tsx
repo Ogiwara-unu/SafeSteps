@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { getDocs, collection, query, where, doc, setDoc } from 'firebase/firestore';
 import { signInWithPopup } from 'firebase/auth';
-import { useHistory } from 'react-router-dom'; // ✅ React Router v5 Es importante para redireccionar con use history, la V6 usa otro tipo
-
+import { useHistory } from 'react-router-dom';
 import { auth, googleProvider, db } from '../../firebaseConfig';
 import { createOrUpdateUserDocument } from '../../firebase/createOrUpdateUser';
+
+import './Login.css'; // Importamos el CSS externo
 
 const generateToken = (): string => {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -15,7 +16,7 @@ export default function CustomLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [userData, setUserData] = useState<any>(null);
-  const history = useHistory(); 
+  const history = useHistory();
 
   const handleCustomLogin = async () => {
     setError('');
@@ -37,7 +38,7 @@ export default function CustomLogin() {
         await setDoc(doc(db, 'users', user.uid), { token }, { merge: true });
         const fullUser = { ...user, token };
         setUserData(fullUser);
-        history.push('/home'); // ✅ redirige al home
+        history.push('/home');
       } else {
         setError('Contraseña incorrecta');
       }
@@ -60,7 +61,7 @@ export default function CustomLogin() {
         token,
       };
       setUserData(fullUser);
-      history.push('/home'); // ✅ redirige al home
+      history.push('/home');
     } catch (err: any) {
       setError(err.message);
     }
@@ -71,55 +72,49 @@ export default function CustomLogin() {
   };
 
   return (
-    <div className="p-4 space-y-4 max-w-md mx-auto">
-      <h2 className="text-xl font-bold">Iniciar Sesión</h2>
+    <div className="login-container">
+      <div className="login-card">
+        <img src="../assets/Imagotipo.png" alt="Logo" className="logo" />
 
-      <input
-        type="email"
-        placeholder="Correo"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="border p-2 w-full"
-      />
-      <input
-        type="password"
-        placeholder="Contraseña"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="border p-2 w-full"
-      />
+        <h2 className="login-title">Bienvenido de nuevo</h2>
+        <p className="login-subtitle">Inicia sesión con tu cuenta para continuar usando nuestros servicios.</p>
 
-      <button
-        onClick={handleCustomLogin}
-        className="bg-blue-500 text-white p-2 rounded w-full"
-      >
-        Entrar con Email
-      </button>
+        <label className='label-field'>Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="input-field"
+        />
 
-      <button
-        onClick={handleGoogleLogin}
-        className="bg-red-500 text-white p-2 rounded w-full"
-      >
-        Entrar con Google
-      </button>
+        <label className='label-field'>Contraseña</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input-field"
+        />
 
-      {/* Botón para registrarse */}
-      <button
-        onClick={goToRegister}
-        className="bg-gray-500 text-white p-2 rounded w-full"
-      >
-        ¿No tienes cuenta? Regístrate
-      </button>
+        <button className="login-button" onClick={handleCustomLogin}>Iniciar Sesión</button>
 
-      {error && <p className="text-red-500">{error}</p>}
-
-      {userData && (
-        <div className="bg-green-100 p-4 rounded">
-          <p>Bienvenido, {userData.email}</p>
-          <p>Proveedor: {userData.provider || 'email'}</p>
-          <p>Token: {userData.token}</p>
+        <div className="login-footer-row">
+          <button className="google-button-inline" onClick={handleGoogleLogin}>
+            Iniciar sesión con Google
+          </button>
+          <span className="separator">|</span>
+          <button className="register-button-inline" onClick={goToRegister}>
+            Registrarse
+          </button>
         </div>
-      )}
+
+        {error && <p className="error-text">{error}</p>}
+
+        {userData && (
+          <div className="success-box">
+            <p>Bienvenido, {userData.email}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
