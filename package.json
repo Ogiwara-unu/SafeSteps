@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@angular/fire": "^19.1.0",
+    "@capacitor-firebase/authentication": "^7.2.0",
     "@capacitor/android": "7.2.0",
     "@capacitor/app": "7.0.1",
     "@capacitor/core": "7.2.0",

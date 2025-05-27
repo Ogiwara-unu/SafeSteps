@@ -1,15 +1,11 @@
 import { useState } from 'react';
-import { getDocs, collection, query, where, doc, setDoc } from 'firebase/firestore';
-import { signInWithPopup } from 'firebase/auth';
 import { useHistory } from 'react-router-dom';
-import { auth, googleProvider, db } from '../../firebaseConfig';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../firebaseConfig';
 import { createOrUpdateUserDocument } from '../../firebase/createOrUpdateUser';
+import { signInWithGoogleCapacitor } from '../../firebase/firebaseAuthService';
 
-import './Login.css'; // Importamos el CSS externo
-
-const generateToken = (): string => {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-};
+import './Login.css';
 
 export default function CustomLogin() {
   const [email, setEmail] = useState('');
@@ -21,37 +17,29 @@ export default function CustomLogin() {
   const handleCustomLogin = async () => {
     setError('');
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        setError('Usuario no encontrado');
-        return;
-      }
-
-      const userDoc = querySnapshot.docs[0];
-      const user = userDoc.data();
-
-      if (user.password === password) {
-        const token = generateToken();
-        await setDoc(doc(db, 'users', user.uid), { token }, { merge: true });
-        const fullUser = { ...user, token };
-        setUserData(fullUser);
-        history.push('/home');
-      } else {
-        setError('Contraseña incorrecta');
-      }
-    } catch (err) {
-      setError('Error al iniciar sesión');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const token = await createOrUpdateUserDocument(user, 'password', password);
+      const fullUser = {
+        email: user.email,
+        uid: user.uid,
+        provider: 'password',
+        token,
+      };
+      setUserData(fullUser);
+      history.push('/home');
+    } catch (err: any) {
       console.error(err);
+      if (err.code === 'auth/user-not-found') setError('Usuario no encontrado');
+      else if (err.code === 'auth/wrong-password') setError('Contraseña incorrecta');
+      else setError('Error al iniciar sesión');
     }
   };
 
   const handleGoogleLogin = async () => {
     setError('');
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      const result = await signInWithGoogleCapacitor();
       const user = result.user;
       const token = await createOrUpdateUserDocument(user, 'google');
       const fullUser = {
@@ -63,7 +51,8 @@ export default function CustomLogin() {
       setUserData(fullUser);
       history.push('/home');
     } catch (err: any) {
-      setError(err.message);
+      console.error(err);
+      setError('Error al iniciar sesión con Google');
     }
   };
 
@@ -75,11 +64,10 @@ export default function CustomLogin() {
     <div className="login-container">
       <div className="login-card">
         <img src="../assets/Imagotipo.png" alt="Logo" className="logo" />
-
         <h2 className="login-title">Bienvenido de nuevo</h2>
         <p className="login-subtitle">Inicia sesión con tu cuenta para continuar usando nuestros servicios.</p>
 
-        <label className='label-field'>Email</label>
+        <label className="label-field">Email</label>
         <input
           type="email"
           value={email}
@@ -87,7 +75,7 @@ export default function CustomLogin() {
           className="input-field"
         />
 
-        <label className='label-field'>Contraseña</label>
+        <label className="label-field">Contraseña</label>
         <input
           type="password"
           value={password}
@@ -95,7 +83,7 @@ export default function CustomLogin() {
           className="input-field"
         />
 
-        <button className="login-button" onClick={handleCustomLogin}>Iniciar Sesión</button>
+        <button className="login-button" onClick={handleCustomLogin}>Iniciar sesión</button>
 
         <div className="login-footer-row">
           <button className="google-button-inline" onClick={handleGoogleLogin}>
