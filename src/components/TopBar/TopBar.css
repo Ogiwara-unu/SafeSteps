@@ -1,0 +1,32 @@
+ion-toolbar {
+  --background: #65695b;
+  height: 55px;
+  --color: white;
+  display: flex;
+  align-items: center; /* Centra verticalmente */
+  padding: 0;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 0;
+  margin-right: -40px;
+}
+
+.logo {
+  height: 80%;
+  width: auto;
+  padding: 20px 5px;
+}
+.custom-menu-button {
+  font-size: 30px; /* Aumenta el tamaño del ícono */
+  width: 50px;
+  height: 50px;
+  color: #D9D9D9;
+}
+
+.custom-menu-button ion-icon {
+  font-size: 30px; /* Tamaño del ícono dentro del botón */
+}

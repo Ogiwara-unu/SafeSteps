@@ -1,3 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wdth,wght@0,18..144,87..112,300..900;1,18..144,87..112,300..900&display=swap');
+
+*{
+    font-family: 'Merriweather';
+}
 .login-container {
     min-height: 100vh;
     display: flex;
@@ -25,13 +30,13 @@
 
 .login-title {
     text-align: center;
-    font-size: 28px;
+    font-size: 25px;
     font-weight: bold;
     color: #3d4037;
 }
 
 .login-subtitle {
-    font-size: 17px;
+    font-size: 15px;
     text-align: center;
     color: #65695b;
     margin-bottom: 26px;
@@ -51,7 +56,7 @@
 
 .label-field {
     color: #65695b;
-    font-size: 15px;
+    font-size: 13px;
 
 }
 
@@ -60,7 +65,7 @@
     background-color: #3d4037;
     color: #FFFFFF;
     padding: 10px;
-    font-weight: bold;
+    font-size: 14px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
