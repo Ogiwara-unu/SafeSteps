@@ -22,9 +22,10 @@
 }
 
 .start-button {
-  --background: #65695b;
-  --color: #fff;
+  --background: #9ca38e;
+  --color: #F2F2F2;
   font-weight: bold;
+  font-size: 17px;
   width: 200px;
   letter-spacing: 2px;
   margin: 0 auto 24px;
