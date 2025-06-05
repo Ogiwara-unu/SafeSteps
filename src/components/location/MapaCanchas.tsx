@@ -6,7 +6,7 @@ import { useLocationTracker } from "../../hooks/locations/useLocationTracker";
 const MapaComercios: React.FC = () => {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<GoogleMap | null>(null);
-  const [markerIds, setMarkerIds] = useState<string[]>([]);
+  const markerIds = useRef<string[]>([]); // Cambiamos a useRef para mejor manejo
   const { location, loading, error, startTracking, stopTracking, requestPermissions } = useLocationTracker();
 
   async function createMap() {
@@ -36,8 +36,16 @@ const MapaComercios: React.FC = () => {
   }
 
   const updateMapLocation = async () => {
-    if (mapInstance.current && location?.coords) {
-      // Mover la cámara a la nueva ubicación
+    if (!mapInstance.current || !location?.coords) return;
+
+    try {
+      // 1. Eliminar marcadores existentes
+      if (markerIds.current.length > 0) {
+        await mapInstance.current.removeMarkers(markerIds.current);
+        markerIds.current = [];
+      }
+
+      // 2. Mover la cámara
       await mapInstance.current.setCamera({
         coordinate: {
           lat: location.coords.latitude,
@@ -46,13 +54,7 @@ const MapaComercios: React.FC = () => {
         zoom: 12
       });
       
-      // Eliminar marcadores anteriores si existen
-      if (markerIds.length > 0) {
-        await mapInstance.current.removeMarkers(markerIds);
-        setMarkerIds([]);
-      }
-      
-      // Agregar nuevo marcador y guardar su ID
+      // 3. Agregar nuevo marcador
       const newMarkerId = await mapInstance.current.addMarker({
         coordinate: {
           lat: location.coords.latitude,
@@ -61,7 +63,24 @@ const MapaComercios: React.FC = () => {
         title: "Tu posición",
       });
       
-      setMarkerIds([newMarkerId]);
+      markerIds.current = [newMarkerId];
+    } catch (error) {
+      console.error("Error actualizando ubicación:", error);
+    }
+  };
+
+  // Limpieza de marcadores y mapa
+  const cleanUpMap = async () => {
+    if (mapInstance.current) {
+      try {
+        if (markerIds.current.length > 0) {
+          await mapInstance.current.removeMarkers(markerIds.current);
+        }
+        await mapInstance.current.destroy();
+        mapInstance.current = null;
+      } catch (error) {
+        console.error("Error en limpieza:", error);
+      }
     }
   };
 
@@ -73,13 +92,7 @@ const MapaComercios: React.FC = () => {
     createMap();
 
     return () => {
-      if (mapInstance.current) {
-        // Limpiar marcadores antes de destruir el mapa
-        if (markerIds.length > 0) {
-          mapInstance.current.removeMarkers(markerIds).catch(console.error);
-        }
-        mapInstance.current.destroy();
-      }
+      cleanUpMap();
     };
   }, []);
 
