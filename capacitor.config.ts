@@ -2,28 +2,33 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.una.trabajo',
-  appName: 'SafeSteps',
+  appName: 'unaapp',
   webDir: 'dist',
   bundledWebRuntime: false,
-  
   server: {
     cleartext: true, 
     androidScheme: 'http', 
     
   },
   plugins: {
+    Camera: {
+      permissions: ["camera", "photos"]
+    },
     FirebaseAuthentication: {
       skipNativeAuth: false,
       providers: [
         "google.com"
-      ],
+      ]
     },
+    
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"]
-    }, GoogleMaps: {
-      apiKey: "AIzaSyBu9hngQxBD3jQumhck1qM8EswburgCnuY",       
     },
+    GoogleMaps: {
+        apiKey: "AIzaSyD32TSwPDCUrFbWea_r7zkCzuxfXXOZbkM",
+      },
   }
 };
 
 export default config;
+ 

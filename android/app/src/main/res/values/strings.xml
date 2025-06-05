@@ -4,6 +4,6 @@
     <string name="title_activity_main">SafeSteps</string>
     <string name="package_name">com.una.trabajo</string>
     <string name="custom_url_scheme">com.una.trabajo</string>
-    <string name="google_maps_api_key">AIzaSyBu9hngQxBD3jQumhck1qM8EswburgCnuY</string>
+    <string name="google_maps_api_key">AIzaSyD32TSwPDCUrFbWea_r7zkCzuxfXXOZbkM</string>
 
 </resources>

@@ -1,0 +1,12 @@
+/* Asegúrate que el contenedor directo del mapa sea transparente */
+#Comercioss-map {
+  background-color: transparent !important;
+}
+
+/* Si el mapa está dentro de un ion-content, este también necesita ser transparente en esa área */
+/* Podrías necesitar ser más específico si no quieres que todo el ion-content sea transparente */
+ion-content.map-page-content { /* Añade una clase a tu ion-content si es necesario */
+  --background: transparent !important;
+}
+
+ 

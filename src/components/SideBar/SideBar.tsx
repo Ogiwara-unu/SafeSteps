@@ -8,7 +8,7 @@ const Sidebar = () => {
         <IonList>
           <IonMenuToggle autoHide={false}>
             <IonItem routerLink="/home">Inicio</IonItem>
-            <IonItem routerLink="/mapa">Mapa</IonItem>
+            <IonItem routerLink="/mapas">Mapa</IonItem>
             <IonItem routerLink="/rutas">Rutas guardadas</IonItem>
             <IonItem routerLink="/compartir">Compartir Ubicación</IonItem>
             <IonItem routerLink="/config">Configuración</IonItem>
