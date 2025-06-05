@@ -6,6 +6,8 @@ import Login from './pages/login/Login';
 import Register from './pages/login/Register';
 import { MostrarDatosUsuario } from './pages/Configuración/config';
 import AcercaDe from './pages/AcercaDe/acerca';
+import Mapa from './components/Mapa/Mapa';
+
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -60,6 +62,9 @@ const App: React.FC = () => (
         </Route>
         <Route exact path="/acerca">
         <AcercaDe/>
+        </Route>
+         <Route exact path="/mapa">
+          <Mapa />
         </Route>
 
       </IonRouterOutlet>

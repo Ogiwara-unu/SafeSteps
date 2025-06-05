@@ -5,6 +5,7 @@ const config: CapacitorConfig = {
   appName: 'SafeSteps',
   webDir: 'dist',
   bundledWebRuntime: false,
+  
   server: {
     cleartext: true, 
     androidScheme: 'http', 
@@ -15,12 +16,12 @@ const config: CapacitorConfig = {
       skipNativeAuth: false,
       providers: [
         "google.com"
-      ]
+      ],
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"]
     }, GoogleMaps: {
-      apiKey: "-----", // Reemplaza con tu clave de API      
+      apiKey: "AIzaSyBu9hngQxBD3jQumhck1qM8EswburgCnuY",       
     },
   }
 };
