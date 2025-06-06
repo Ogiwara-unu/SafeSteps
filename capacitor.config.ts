@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.una.trabajo',
-  appName: 'unaapp',
+  appName: 'SafeSteps',
   webDir: 'dist',
   bundledWebRuntime: false,
   server: {
@@ -11,9 +11,6 @@ const config: CapacitorConfig = {
     
   },
   plugins: {
-    Camera: {
-      permissions: ["camera", "photos"]
-    },
     FirebaseAuthentication: {
       skipNativeAuth: false,
       providers: [
