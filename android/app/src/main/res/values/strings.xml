@@ -1,9 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">SafeSteps</string>
-    <string name="title_activity_main">SafeSteps</string>
+    <string name="app_name">unaapp</string>
+    <string name="title_activity_main">unaapp</string>
     <string name="package_name">com.una.trabajo</string>
     <string name="custom_url_scheme">com.una.trabajo</string>
-    <string name="google_maps_api_key">AIzaSyD32TSwPDCUrFbWea_r7zkCzuxfXXOZbkM</string>
-
 </resources>

@@ -19,7 +19,7 @@ const MapaComercios: React.FC = () => {
   };
 
   async function createMap() {
-    if (!mapRef.current) return;
+    if (!mapRef.current || mapInstance.current) return; // <-- Solo crea si no existe
 
     try {
       mapInstance.current = await GoogleMap.create({
@@ -37,10 +37,10 @@ const MapaComercios: React.FC = () => {
       });
 
       setMapReady(true);
-      
-      if (location?.coords) {
+
+      /*if (location?.coords) {
         await updateLocationCircles();
-      }
+      }*/
     } catch (error) {
       console.error("Error al inicializar el mapa:", error);
     }
@@ -148,7 +148,7 @@ const MapaComercios: React.FC = () => {
           right: "20px",
           zIndex: 1000
         }}>
-          <IonButton 
+          <IonButton
             onClick={centerMapOnLocation}
             shape="round"
             size="small"
