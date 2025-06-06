@@ -1,63 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import { GoogleMap } from "@capacitor/google-maps";
-import { IonSpinner, IonText, IonButton, IonIcon, IonModal, IonInput, IonHeader, IonToolbar, IonTitle, IonContent, IonFooter } from "@ionic/react";
+import { IonSpinner, IonText, IonButton, IonIcon } from "@ionic/react";
 import { useLocationTracker } from "../../hooks/locations/useLocationTracker";
-import { locateOutline, pinOutline, trashOutline, createOutline, map, listOutline, closeOutline } from "ionicons/icons";
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
+import { locateOutline, pinOutline, listOutline, closeOutline } from "ionicons/icons";
+import { useMarkers } from "../../hooks/useMarkers";
+import { MarkerModal } from "./MarkerModal";
+import { MarkerList } from "./MarkerList";
 
 const MapaCanchas: React.FC = () => {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<GoogleMap | null>(null);
   const circleIds = useRef<string[]>([]);
   const markerIds = useRef<{ [id: string]: string }>({});
-  const isUpdatingRef = useRef(false);
   const { location, loading, startTracking, stopTracking, requestPermissions } = useLocationTracker();
   const [mapReady, setMapReady] = useState(false);
-  const [markers, setMarkers] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [markerName, setMarkerName] = useState("");
   const [editingMarker, setEditingMarker] = useState<any | null>(null);
   const [showList, setShowList] = useState(false);
 
-  // --- Firestore helpers ---
-  const loadMarkersFromFirestore = async () => {
-    const snapshot = await getDocs(collection(db, "markers"));
-    const loaded = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        lat: typeof data.lat === "number" ? data.lat : 0,
-        lng: typeof data.lng === "number" ? data.lng : 0,
-        name: typeof data.name === "string" && data.name.trim() !== "" ? data.name : "(Sin nombre)"
-      };
-    });
-    setMarkers(loaded);
-  };
-
-  const saveMarkerToFirestore = async (lat: number, lng: number, name: string) => {
-    // Firestore crea la colección automáticamente si no existe
-    return await addDoc(collection(db, "markers"), { lat, lng, name });
-  };
-
-  const deleteMarkerFromFirestore = async (id: string) => {
-    await deleteDoc(doc(db, "markers", id));
-    setMarkers(prev => prev.filter(m => m.id !== id));
-  };
-
-  const updateMarkerNameInFirestore = async (id: string, name: string) => {
-    await updateDoc(doc(db, "markers", id), { name });
-    setMarkers(prev => prev.map(m => m.id === id ? { ...m, name } : m));
-  };
+  // Usa el hook de marcadores
+  const { markers, loadMarkers, addMarker, deleteMarker, updateMarker } = useMarkers();
 
   // --- Map helpers ---
   const clearCircles = async () => {
     if (mapInstance.current && circleIds.current.length > 0) {
       try {
         await mapInstance.current.removeCircles(circleIds.current);
-      } catch (e) {
-        // Si el mapa ya no existe, ignora el error
-      }
+      } catch (e) {}
       circleIds.current = [];
     }
   };
@@ -86,8 +56,6 @@ const MapaCanchas: React.FC = () => {
           disableDefaultUI: true,
         },
       });
-      console.log("Mapa creado:", mapInstance.current);
-
       setMapReady(true);
     } catch (error) {
       console.error("Error al inicializar el mapa:", error);
@@ -96,15 +64,11 @@ const MapaCanchas: React.FC = () => {
 
   const updateLocationCircles = async () => {
     if (!mapInstance.current || !location?.coords) return;
-
     try {
-      // Limpia primero cualquier círculo existente
       if (circleIds.current.length > 0) {
         await mapInstance.current.removeCircles(circleIds.current);
         circleIds.current = [];
       }
-
-      // Agrega los nuevos círculos
       const newCircleIds = await mapInstance.current.addCircles([
         {
           center: {
@@ -150,15 +114,10 @@ const MapaCanchas: React.FC = () => {
     }
   };
 
-  // --- Marcadores personalizados ---
+  // --- Renderiza marcadores en el mapa ---
   const renderMarkers = async () => {
-    if (!mapInstance.current) {
-      console.warn("Intentando renderizar marcadores pero el mapa no está listo.");
-      return;
-    }
-
+    if (!mapInstance.current) return;
     await clearMarkers();
-
     for (const marker of markers) {
       try {
         const ids = await mapInstance.current.addMarkers([
@@ -176,47 +135,39 @@ const MapaCanchas: React.FC = () => {
     }
   };
 
-
-  // --- Agregar marcador con nombre (usando modal) ---
-  const addCurrentLocationMarker = async () => {
+  // --- Modal handlers ---
+  const addCurrentLocationMarker = () => {
     setMarkerName("");
+    setEditingMarker(null);
     setShowModal(true);
   };
 
-  const handleSaveMarker = async () => {
-    if (!markerName.trim() || !location?.coords) return;
-    try {
-      await saveMarkerToFirestore(location.coords.latitude, location.coords.longitude, markerName.trim());
-      await loadMarkersFromFirestore(); // Recarga la lista
-      setShowModal(false);
-      setMarkerName("");
-      window.alert("¡Marcador agregado correctamente!");
-    } catch (error) {
-      window.alert("Error al agregar el marcador. Intenta de nuevo.");
-      console.error(error);
-    }
+  const handleSaveMarker = async (name: string) => {
+    if (!name.trim() || !location?.coords) return;
+    await addMarker(location.coords.latitude, location.coords.longitude, name.trim());
+    setShowModal(false);
+    setMarkerName("");
+    window.alert("¡Marcador agregado correctamente!");
   };
 
-  // --- Eliminar marcador ---
   const handleDeleteMarker = async (id: string) => {
-    await deleteMarkerFromFirestore(id);
-    await loadMarkersFromFirestore(); // <-- recarga desde Firestore
+    await deleteMarker(id);
+    await loadMarkers();
   };
 
-  // --- Editar marcador (usando modal) ---
   const handleEditMarker = (marker: any) => {
     setEditingMarker(marker);
     setMarkerName(marker.name);
     setShowModal(true);
   };
 
-  const handleUpdateMarker = async () => {
-    if (!markerName.trim() || !editingMarker) return;
-    await updateMarkerNameInFirestore(editingMarker.id, markerName.trim());
+  const handleUpdateMarker = async (name: string) => {
+    if (!name.trim() || !editingMarker) return;
+    await updateMarker(editingMarker.id, name.trim());
     setShowModal(false);
     setEditingMarker(null);
     setMarkerName("");
-    await loadMarkersFromFirestore(); // <-- recarga desde Firestore
+    await loadMarkers();
   };
 
   const cleanUpMap = async () => {
@@ -235,11 +186,10 @@ const MapaCanchas: React.FC = () => {
   useEffect(() => {
     requestPermissions();
     startTracking();
-    loadMarkersFromFirestore();
-
+    loadMarkers();
     return () => {
       stopTracking();
-      cleanUpMap(); // Usa cleanUpMap en lugar de solo clearCircles
+      cleanUpMap();
     };
   }, []);
 
@@ -252,25 +202,14 @@ const MapaCanchas: React.FC = () => {
 
   useEffect(() => {
     if (!mapReady || !location?.coords) return;
-
-    const updateCircles = async () => {
-      try {
-        await updateLocationCircles();
-      } catch (error) {
-        console.error("Error updating circles:", error);
-      }
-    };
-
-    updateCircles();
+    updateLocationCircles();
   }, [location, mapReady]);
-
 
   useEffect(() => {
     if (mapReady && mapInstance.current) {
       renderMarkers();
     }
   }, [markers, mapReady]);
-
 
   return (
     <div style={{ position: "relative", width: "100%", height: "calc(100vh - 56px)" }}>
@@ -320,97 +259,30 @@ const MapaCanchas: React.FC = () => {
         </IonButton>
       </div>
 
-      {/* Lista de marcadores para editar/eliminar */}
+      {/* Lista de marcadores */}
       {showList && (
         <div style={{
           position: "absolute",
           top: "64px",
           right: "20px",
-          zIndex: 1000,
-          background: "#fff",
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-          padding: "8px",
-          maxWidth: "180px",
-          minWidth: "120px"
+          zIndex: 1000
         }}>
-          <strong style={{ fontSize: 13, color: "#222" }}>Marcadores</strong>
-          <div style={{ maxHeight: "180px", overflowY: "auto" }}>
-            {markers.map(marker => (
-              <div key={marker.id} style={{
-                borderBottom: "1px solid #eee",
-                padding: "4px 0",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between"
-              }}>
-                <span style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: "#222",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  maxWidth: 90
-                }}>
-                  {marker.name || "(Sin nombre)"}
-                </span>
-                <div style={{ display: "flex", gap: "2px" }}>
-                  <IonButton size="small" fill="clear" onClick={() => handleEditMarker(marker)}>
-                    <IonIcon icon={createOutline} />
-                  </IonButton>
-                  <IonButton size="small" fill="clear" color="danger" onClick={() => handleDeleteMarker(marker.id)}>
-                    <IonIcon icon={trashOutline} />
-                  </IonButton>
-                </div>
-              </div>
-            ))}
-          </div>
+          <MarkerList
+            markers={markers}
+            onEdit={handleEditMarker}
+            onDelete={handleDeleteMarker}
+          />
         </div>
       )}
 
       {/* Modal para agregar/editar marcador */}
-      <IonModal
+      <MarkerModal
         isOpen={showModal}
-        onDidDismiss={() => { setShowModal(false); setEditingMarker(null); }}
-        className="custom-marker-modal"
-        backdropDismiss={true}
-      >
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle style={{ fontSize: 18, textAlign: "center" }}>
-              {editingMarker ? "Editar marcador" : "Agregar marcador"}
-            </IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent>
-          <div style={{ padding: 16 }}>
-            <IonInput
-              label="Nombre"
-              labelPlacement="floating"
-              placeholder="Ej: Parque, Panadería..."
-              value={markerName}
-              onIonInput={e => setMarkerName(e.detail.value ?? "")}
-              clearInput
-              style={{ fontSize: 16 }}
-            />
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24, gap: 8 }}>
-              <IonButton onClick={() => { setShowModal(false); setEditingMarker(null); }} color="medium">
-                Cancelar
-              </IonButton>
-              {editingMarker ? (
-                <IonButton onClick={handleUpdateMarker} disabled={!markerName.trim()}>
-                  Guardar
-                </IonButton>
-              ) : (
-                <IonButton onClick={handleSaveMarker} disabled={!markerName.trim()}>
-                  Agregar
-                </IonButton>
-              )}
-            </div>
-          </div>
-        </IonContent>
-      </IonModal>
+        initialName={markerName}
+        onClose={() => { setShowModal(false); setEditingMarker(null); }}
+        onSave={editingMarker ? handleUpdateMarker : handleSaveMarker}
+        editing={!!editingMarker}
+      />
 
       {loading && !location?.coords && (
         <div style={{
