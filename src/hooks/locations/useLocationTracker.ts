@@ -5,7 +5,6 @@ interface LocationState {
   location: Position | null;
   loading: boolean;
   error: string | null;
-  countdown: number | null;
 }
 
 export const useLocationTracker = () => {
@@ -13,10 +12,10 @@ export const useLocationTracker = () => {
     location: null,
     loading: true,
     error: null,
-    countdown: null,
   });
-  
+
   const intervalRef = useRef<number | null>(null);
+  const isFetching = useRef(false);
 
   const clearIntervals = () => {
     if (intervalRef.current) {
@@ -26,20 +25,22 @@ export const useLocationTracker = () => {
   };
 
   const getCurrentPosition = async () => {
+    if (isFetching.current) return;
+    isFetching.current = true;
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      
+
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000
       });
-      
+
       setState(prev => ({
         ...prev,
         loading: false,
         location: position
       }));
-      
+
       return position;
     } catch (error) {
       setState(prev => ({
@@ -48,20 +49,17 @@ export const useLocationTracker = () => {
         error: `Error getting location: ${error instanceof Error ? error.message : String(error)}`
       }));
       throw error;
+    } finally {
+      isFetching.current = false;
     }
   };
 
   const startTracking = () => {
-    // Limpia intervalos previos
     clearIntervals();
-    
-    // Obtener posición inicial inmediatamente
     getCurrentPosition();
-    
-    // Configurar intervalo recurrente cada 5 segundos
     intervalRef.current = window.setInterval(() => {
       getCurrentPosition();
-    }, 5000); // 5000 ms = 5 segundos
+    }, 5000);
   };
 
   const stopTracking = () => {
@@ -83,7 +81,7 @@ export const useLocationTracker = () => {
 
   useEffect(() => {
     return () => {
-      clearIntervals(); // Limpieza al desmontar
+      clearIntervals();
     };
   }, []);
 

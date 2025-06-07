@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { GoogleMap } from "@capacitor/google-maps";
-import { IonSpinner, IonText, IonButton, IonIcon } from "@ionic/react";
+import { IonSpinner, IonText, IonButton, IonIcon, IonModal } from "@ionic/react";
 import { useLocationTracker } from "../../hooks/locations/useLocationTracker";
 import { locateOutline, pinOutline, listOutline, closeOutline } from "ionicons/icons";
-import { useMarkers } from "../../hooks/useMarkers";
+import { useMarkers } from "../../hooks/markers/useMarkers";
 import { MarkerModal } from "./MarkerModal";
 import { MarkerList } from "./MarkerList";
 
@@ -18,6 +18,8 @@ const MapaCanchas: React.FC = () => {
   const [markerName, setMarkerName] = useState("");
   const [editingMarker, setEditingMarker] = useState<any | null>(null);
   const [showList, setShowList] = useState(false);
+  const [mapClean, setMapClean] = useState(true);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   // Usa el hook de marcadores
   const { markers, loadMarkers, addMarker, deleteMarker, updateMarker } = useMarkers();
@@ -27,14 +29,16 @@ const MapaCanchas: React.FC = () => {
     if (mapInstance.current && circleIds.current.length > 0) {
       try {
         await mapInstance.current.removeCircles(circleIds.current);
-      } catch (e) {}
+      } catch {}
       circleIds.current = [];
     }
   };
 
   const clearMarkers = async () => {
     if (mapInstance.current && Object.values(markerIds.current).length > 0) {
-      await mapInstance.current.removeMarkers(Object.values(markerIds.current));
+      try {
+        await mapInstance.current.removeMarkers(Object.values(markerIds.current));
+      } catch {}
       markerIds.current = {};
     }
   };
@@ -42,6 +46,7 @@ const MapaCanchas: React.FC = () => {
   async function createMap() {
     if (!mapRef.current || mapInstance.current) return;
     await clearCircles();
+    await clearMarkers();
     try {
       mapInstance.current = await GoogleMap.create({
         id: "canchas-map",
@@ -57,13 +62,15 @@ const MapaCanchas: React.FC = () => {
         },
       });
       setMapReady(true);
-    } catch (error) {
-      console.error("Error al inicializar el mapa:", error);
-    }
+    } catch {}
   }
 
   const updateLocationCircles = async () => {
-    if (!mapInstance.current || !location?.coords) return;
+    if (!mapReady || !mapInstance.current || !location?.coords) return;
+    if (location.coords.accuracy > 100) {
+      await clearCircles();
+      return;
+    }
     try {
       if (circleIds.current.length > 0) {
         await mapInstance.current.removeCircles(circleIds.current);
@@ -96,21 +103,21 @@ const MapaCanchas: React.FC = () => {
         }
       ]);
       circleIds.current = newCircleIds;
-    } catch (error) {
-      console.error("Error actualizando círculos:", error);
-    }
+    } catch {}
   };
 
   const centerMapOnLocation = async () => {
     if (mapInstance.current && location?.coords) {
-      await mapInstance.current.setCamera({
-        coordinate: {
-          lat: location.coords.latitude,
-          lng: location.coords.longitude,
-        },
-        zoom: 15,
-        animate: true
-      });
+      try {
+        await mapInstance.current.setCamera({
+          coordinate: {
+            lat: location.coords.latitude,
+            lng: location.coords.longitude,
+          },
+          zoom: 15,
+          animate: true
+        });
+      } catch {}
     }
   };
 
@@ -129,9 +136,7 @@ const MapaCanchas: React.FC = () => {
           }
         ]);
         markerIds.current[marker.id] = ids[0];
-      } catch (err) {
-        console.error("Error al añadir marcador:", err);
-      }
+      } catch {}
     }
   };
 
@@ -171,14 +176,20 @@ const MapaCanchas: React.FC = () => {
   };
 
   const cleanUpMap = async () => {
-    if (mapInstance.current) {
-      try {
+    setMapClean(false);
+    try {
+      if (mapInstance.current) {
         await clearCircles();
         await clearMarkers();
         await mapInstance.current.destroy();
-      } catch (error) {
-        console.error("Error en limpieza:", error);
+        mapInstance.current = null;
+        setMapReady(false);
       }
+    } catch {}
+    finally {
+      circleIds.current = [];
+      markerIds.current = {};
+      setMapClean(true);
     }
   };
 
@@ -194,16 +205,23 @@ const MapaCanchas: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    createMap();
+    let isMounted = true;
+    (async () => {
+      await cleanUpMap();
+      if (isMounted && mapClean) {
+        await createMap();
+      }
+    })();
     return () => {
+      isMounted = false;
       cleanUpMap();
     };
   }, []);
 
   useEffect(() => {
-    if (!mapReady || !location?.coords) return;
+    if (!mapReady || !location?.coords || !mapClean) return;
     updateLocationCircles();
-  }, [location, mapReady]);
+  }, [location, mapReady, mapClean]);
 
   useEffect(() => {
     if (mapReady && mapInstance.current) {
@@ -214,6 +232,36 @@ const MapaCanchas: React.FC = () => {
   return (
     <div style={{ position: "relative", width: "100%", height: "calc(100vh - 56px)" }}>
       <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
+
+      {/* Botón de salir */}
+      <IonButton
+        color="danger"
+        style={{ position: "absolute", bottom: 20, left: 20, zIndex: 2000 }}
+        onClick={() => setShowExitConfirm(true)}
+      >
+        Salir
+      </IonButton>
+
+      <IonModal isOpen={showExitConfirm}>
+        <div style={{ padding: 24, textAlign: "center" }}>
+          <IonText color="danger">
+            ¿Seguro que quieres salir? Se dejará de trackear tu ubicación.
+          </IonText>
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 16 }}>
+            <IonButton color="medium" onClick={() => setShowExitConfirm(false)}>
+              Cancelar
+            </IonButton>
+            <IonButton color="danger" onClick={async () => {
+              await stopTracking();
+              await cleanUpMap();
+              setShowExitConfirm(false);
+              window.history.back();
+            }}>
+              Salir
+            </IonButton>
+          </div>
+        </div>
+      </IonModal>
 
       <div style={{
         position: "absolute",

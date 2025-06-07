@@ -1,5 +1,4 @@
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonButton } from "@ionic/react";
-import { Marker } from "../../hooks/useMarkers";
 import { useState, useEffect } from "react";
 
 interface MarkerModalProps {

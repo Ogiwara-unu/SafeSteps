@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { db } from "../../firebaseConfig";
 
 export interface Marker {
   id: string;

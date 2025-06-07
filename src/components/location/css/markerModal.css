@@ -1,0 +1,18 @@
+ /* Estiilos para el modal de agregar marcador */
+.custom-marker-modal {
+  --width: 320px;
+  --height: 180px;
+  --border-radius: 16px;
+  --background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.custom-marker-modal .modal-wrapper {
+  border-radius: 16px;
+  max-width: 320px;
+  min-width: 260px;
+  margin: auto;
+  top: 20% !important;
+  height: auto !important;
+}
