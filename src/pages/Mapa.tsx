@@ -6,7 +6,7 @@ import {   IonPage   } from "@ionic/react";
 const Mapas: React.FC = () => {
   return (
     <IonPage>
-      <h1>Mapass</h1> 
+      <h1>Mapa</h1> 
         <MapaComercios /> 
     </IonPage>
   );

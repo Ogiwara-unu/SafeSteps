@@ -11,6 +11,7 @@ export interface Marker {
 
 export function useMarkers() {
   const [markers, setMarkers] = useState<Marker[]>([]);
+  const [selectedMarkers, setSelectedMarkers] = useState<string[]>([]);
 
   const loadMarkers = useCallback(async () => {
     const snapshot = await getDocs(collection(db, "markers"));
@@ -18,22 +19,34 @@ export function useMarkers() {
       const data = doc.data();
       return {
         id: doc.id,
-        lat: typeof data.lat === "number" ? data.lat : 0,
-        lng: typeof data.lng === "number" ? data.lng : 0,
-        name: typeof data.name === "string" && data.name.trim() !== "" ? data.name : "(Sin nombre)"
+        lat: data.lat,
+        lng: data.lng,
+        name: data.name || "(Sin nombre)"
       };
     });
     setMarkers(loaded);
   }, []);
 
+  const toggleMarkerSelection = (id: string) => {
+    setSelectedMarkers(prev => 
+      prev.includes(id) 
+        ? prev.filter(markerId => markerId !== id)
+        : prev.length < 2 
+          ? [...prev, id] 
+          : [prev[1], id]
+    );
+  };
+
   const addMarker = async (lat: number, lng: number, name: string) => {
-    await addDoc(collection(db, "markers"), { lat, lng, name });
+    const docRef = await addDoc(collection(db, "markers"), { lat, lng, name });
     await loadMarkers();
+    return docRef.id;
   };
 
   const deleteMarker = async (id: string) => {
     await deleteDoc(doc(db, "markers", id));
     setMarkers(prev => prev.filter(m => m.id !== id));
+    setSelectedMarkers(prev => prev.filter(markerId => markerId !== id));
   };
 
   const updateMarker = async (id: string, name: string) => {
@@ -41,5 +54,13 @@ export function useMarkers() {
     setMarkers(prev => prev.map(m => m.id === id ? { ...m, name } : m));
   };
 
-  return { markers, loadMarkers, addMarker, deleteMarker, updateMarker };
+  return { 
+    markers, 
+    loadMarkers, 
+    addMarker, 
+    deleteMarker, 
+    updateMarker,
+    selectedMarkers,
+    toggleMarkerSelection
+  };
 }

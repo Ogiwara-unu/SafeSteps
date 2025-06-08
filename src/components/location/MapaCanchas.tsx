@@ -6,12 +6,16 @@ import { locateOutline, pinOutline, listOutline, closeOutline } from "ionicons/i
 import { useMarkers } from "../../hooks/markers/useMarkers";
 import { MarkerModal } from "./MarkerModal";
 import { MarkerList } from "./MarkerList";
+import { crearRutaSegura, decodePolyline } from "../../hooks/rutas/rutaSegura";
+import { radioButtonOnOutline, trailSignOutline } from "ionicons/icons";
 
 const MapaCanchas: React.FC = () => {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<GoogleMap | null>(null);
   const circleIds = useRef<string[]>([]);
   const markerIds = useRef<{ [id: string]: string }>({});
+  const trazoIdRef = useRef<string | null>(null); // Referencia para la ruta dibujada
+
   const { location, loading, startTracking, stopTracking, requestPermissions } = useLocationTracker();
   const [mapReady, setMapReady] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -21,10 +25,37 @@ const MapaCanchas: React.FC = () => {
   const [mapClean, setMapClean] = useState(true);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
-  // Usa el hook de marcadores
-  const { markers, loadMarkers, addMarker, deleteMarker, updateMarker } = useMarkers();
+  // Hook para marcadores
+  const {  markers, selectedMarkers,toggleMarkerSelection, loadMarkers, addMarker, deleteMarker, updateMarker } = useMarkers();
 
-  // --- Map helpers ---
+
+ const getSelectedMarkers = () => {
+  const seleccionados = markers.filter(m => selectedMarkers.includes(m.id));
+  console.log("Marcadores seleccionados:", seleccionados);
+  return seleccionados;
+};
+
+
+
+ const dibujarRutaEntreSeleccionados = async () => {
+  const seleccionados = getSelectedMarkers();
+  if (seleccionados.length === 2) {
+    await dibujarRutaSeguraEnMapa(seleccionados);
+  }
+};
+
+
+
+    useEffect(() => {
+    if (selectedMarkers.length === 2) {
+      dibujarRutaEntreSeleccionados();
+    } else {
+      clearPolyline();
+    }
+  }, [selectedMarkers]);
+
+
+  // --- Funciones para limpiar elementos del mapa ---
   const clearCircles = async () => {
     if (mapInstance.current && circleIds.current.length > 0) {
       try {
@@ -43,10 +74,21 @@ const MapaCanchas: React.FC = () => {
     }
   };
 
+  const clearPolyline = async () => {
+    if (mapInstance.current && trazoIdRef.current) {
+      try {
+        await mapInstance.current.removePolylines([trazoIdRef.current]);
+      } catch {}
+      trazoIdRef.current = null;
+    }
+  };
+
+  // --- Crear mapa ---
   async function createMap() {
     if (!mapRef.current || mapInstance.current) return;
     await clearCircles();
     await clearMarkers();
+    await clearPolyline();
     try {
       mapInstance.current = await GoogleMap.create({
         id: "canchas-map",
@@ -65,6 +107,7 @@ const MapaCanchas: React.FC = () => {
     } catch {}
   }
 
+  // --- Actualizar círculos de ubicación ---
   const updateLocationCircles = async () => {
     if (!mapReady || !mapInstance.current || !location?.coords) return;
     if (location.coords.accuracy > 100) {
@@ -87,7 +130,7 @@ const MapaCanchas: React.FC = () => {
           fillOpacity: 1,
           strokeColor: "#FFFFFF",
           strokeOpacity: 1,
-          strokeWeight: 1
+          strokeWeight: 1,
         },
         {
           center: {
@@ -99,13 +142,14 @@ const MapaCanchas: React.FC = () => {
           fillOpacity: 0.2,
           strokeColor: "#4285F4",
           strokeOpacity: 0.5,
-          strokeWeight: 1
-        }
+          strokeWeight: 1,
+        },
       ]);
       circleIds.current = newCircleIds;
     } catch {}
   };
 
+  // --- Centrar mapa en ubicación ---
   const centerMapOnLocation = async () => {
     if (mapInstance.current && location?.coords) {
       try {
@@ -115,32 +159,123 @@ const MapaCanchas: React.FC = () => {
             lng: location.coords.longitude,
           },
           zoom: 15,
-          animate: true
+          animate: true,
         });
       } catch {}
     }
   };
 
-  // --- Renderiza marcadores en el mapa ---
-  const renderMarkers = async () => {
+  // --- Renderizar marcadores ---
+   const renderMarkers = async () => {
     if (!mapInstance.current) return;
     await clearMarkers();
+    
     for (const marker of markers) {
       try {
         const ids = await mapInstance.current.addMarkers([
           {
             coordinate: { lat: marker.lat, lng: marker.lng },
+            iconUrl: selectedMarkers.includes(marker.id) 
+              ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+              : "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
             title: marker.name,
-            snippet: "Marcador guardado",
-            iconUrl: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+            snippet: `Lat: ${marker.lat.toFixed(4)}, Lng: ${marker.lng.toFixed(4)}`
           }
         ]);
         markerIds.current[marker.id] = ids[0];
-      } catch {}
+      } catch (error) {
+        console.error("Error renderizando marcador:", error);
+      }
     }
   };
 
-  // --- Modal handlers ---
+
+   useEffect(() => {
+    if (mapReady) {
+      renderMarkers();
+    }
+  }, [selectedMarkers, mapReady]);
+
+
+  // --- Función para dibujar ruta segura en el mapa ---
+  const dibujarRutaSeguraEnMapa = async (puntos: { lat: number; lng: number }[]) => {
+
+  console.log("Iniciando dibujarRutaSeguraEnMapa con puntos:", puntos);
+
+  if (!mapInstance.current) {
+    console.error("El mapa no está inicializado");
+    return;
+  }
+
+  if (puntos.length < 2) {
+    console.error("Se necesitan al menos 2 puntos para crear una ruta");
+    return;
+  }
+
+  try {
+    // 1. Limpiar ruta anterior
+    await clearPolyline();
+    
+    // 2. Crear ruta temporal (línea recta) para visualización inmediata
+   
+    
+    // 3. Obtener ruta optimizada de la API
+    const polylineEncoded = await crearRutaSegura(puntos);
+    
+    if (!polylineEncoded) {
+      console.error("No se obtuvo ruta de la API");
+      return;
+    }
+
+    // 4. Eliminar ruta temporal
+    
+    
+    // 5. Dibujar ruta definitiva
+    const puntosRuta = decodePolyline(polylineEncoded);
+    const polylineId = await mapInstance.current.addPolylines([
+      {
+        path: puntosRuta,
+        strokeColor: "#2E86DE", // Azul para ruta definitiva
+        strokeWeight: 4,
+        strokeOpacity: 1
+      }
+    ]);
+
+    trazoIdRef.current = polylineId[0];
+    console.log("Ruta dibujada con ID:", polylineId[0]);
+
+  } catch (error) {
+    console.error("Error completo al dibujar ruta:", error);
+  }
+
+
+  
+};
+
+
+
+
+
+const dibujarRutaSimple = async (puntos: { lat: number; lng: number }[]) => {
+  if (!mapInstance.current || puntos.length < 2) return;
+  
+  await clearPolyline();
+  
+  const polylineId = await mapInstance.current.addPolylines([
+    {
+      path: puntos,
+      strokeColor: "#00FF00", // Verde brillante para prueba
+      strokeWeight: 6
+    }
+  ]);
+  
+  trazoIdRef.current = polylineId[0];
+};
+
+
+
+
+  // --- Handlers de modal y marcadores ---
   const addCurrentLocationMarker = () => {
     setMarkerName("");
     setEditingMarker(null);
@@ -181,6 +316,7 @@ const MapaCanchas: React.FC = () => {
       if (mapInstance.current) {
         await clearCircles();
         await clearMarkers();
+        await clearPolyline();
         await mapInstance.current.destroy();
         mapInstance.current = null;
         setMapReady(false);
@@ -189,6 +325,7 @@ const MapaCanchas: React.FC = () => {
     finally {
       circleIds.current = [];
       markerIds.current = {};
+      trazoIdRef.current = null;
       setMapClean(true);
     }
   };
@@ -251,55 +388,56 @@ const MapaCanchas: React.FC = () => {
             <IonButton color="medium" onClick={() => setShowExitConfirm(false)}>
               Cancelar
             </IonButton>
-            <IonButton color="danger" onClick={async () => {
-              await stopTracking();
-              await cleanUpMap();
-              setShowExitConfirm(false);
-              window.history.back();
-            }}>
+            <IonButton
+              color="danger"
+              onClick={async () => {
+                await stopTracking();
+                await cleanUpMap();
+                setShowExitConfirm(false);
+                window.history.back();
+              }}
+            >
               Salir
             </IonButton>
           </div>
         </div>
       </IonModal>
 
-      <div style={{
-        position: "absolute",
-        bottom: "20px",
-        right: "20px",
-        zIndex: 1000,
-        display: "flex",
-        flexDirection: "row",
-        gap: "8px"
-      }}>
-        <IonButton
-          onClick={centerMapOnLocation}
-          shape="round"
-          size="small"
-        >
+      <div
+        style={{
+          position: "absolute",
+          bottom: "20px",
+          right: "20px",
+          zIndex: 1000,
+          display: "flex",
+          flexDirection: "row",
+          gap: "8px",
+        }}
+      >
+        <IonButton onClick={centerMapOnLocation} shape="round" size="small">
           <IonIcon icon={locateOutline} />
         </IonButton>
-        <IonButton
-          onClick={addCurrentLocationMarker}
-          shape="round"
-          size="small"
-          color="warning"
-        >
+        <IonButton onClick={addCurrentLocationMarker} shape="round" size="small" color="warning">
           <IonIcon icon={pinOutline} />
+        </IonButton>
+       <IonButton onClick={() => dibujarRutaSeguraEnMapa(getSelectedMarkers())}>
+          🛣️
         </IonButton>
       </div>
 
       {/* Botón flotante para mostrar/ocultar la lista */}
-      <div style={{
-        position: "absolute",
-        top: "20px",
-        right: "20px",
-        zIndex: 1100
-      }}>
+      <div
+        style={{
+          position: "absolute",
+          top: "20px",
+          right: "20px",
+          zIndex: 1100,
+        }}
+      >
         <IonButton
           size="small"
           shape="round"
-          onClick={() => setShowList(v => !v)}
+          onClick={() => setShowList((v) => !v)}
           style={{ minWidth: 0, width: 36, height: 36, padding: 0 }}
           color="light"
         >
@@ -307,42 +445,75 @@ const MapaCanchas: React.FC = () => {
         </IonButton>
       </div>
 
+
+
+
+         {selectedMarkers.length === 2 && (
+        <div style={{
+          position: 'absolute',
+          bottom: '80px',
+          right: '20px',
+          zIndex: 1000
+        }}>
+          <IonButton 
+           // En el onClick del botón
+        onClick={async () => {
+  console.log("Iniciando creación de ruta...");
+  const seleccionados = getSelectedMarkers();
+  console.log("Puntos a enviar:", seleccionados);
+  await dibujarRutaSeguraEnMapa(seleccionados);
+  console.log("Proceso completado");
+}}
+          >
+            <IonIcon slot="start" icon={trailSignOutline} />
+            Crear Ruta
+          </IonButton>
+        </div>
+      )}
+
+
       {/* Lista de marcadores */}
       {showList && (
         <div style={{
-          position: "absolute",
-          top: "64px",
-          right: "20px",
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
           zIndex: 1000
         }}>
           <MarkerList
             markers={markers}
             onEdit={handleEditMarker}
             onDelete={handleDeleteMarker}
+            selectedMarkers={selectedMarkers}
+            onToggleSelect={toggleMarkerSelection}
           />
         </div>
       )}
-
       {/* Modal para agregar/editar marcador */}
       <MarkerModal
         isOpen={showModal}
         initialName={markerName}
-        onClose={() => { setShowModal(false); setEditingMarker(null); }}
+        onClose={() => {
+          setShowModal(false);
+          setEditingMarker(null);
+        }}
         onSave={editingMarker ? handleUpdateMarker : handleSaveMarker}
         editing={!!editingMarker}
       />
 
       {loading && !location?.coords && (
-        <div style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          zIndex: 1000
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
           <IonSpinner name="crescent" color="primary" />
           <IonText color="primary">Obteniendo ubicación...</IonText>
         </div>
