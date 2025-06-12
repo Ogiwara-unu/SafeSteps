@@ -8,6 +8,8 @@ import { MarkerModal } from "./MarkerModal";
 import { MarkerList } from "./MarkerList";
 import { crearRutaSegura, decodePolyline } from "../../hooks/rutas/rutaSegura";
 import { radioButtonOnOutline, trailSignOutline } from "ionicons/icons";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 
 const MapaCanchas: React.FC = () => {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -371,6 +373,8 @@ const dibujarRutaSimple = async (puntos: { lat: number; lng: number }[]) => {
       <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
 
       {/* Botón de salir */}
+
+      
       <IonButton
         color="danger"
         style={{ position: "absolute", bottom: 20, left: 20, zIndex: 2000 }}
