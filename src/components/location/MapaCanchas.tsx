@@ -10,6 +10,10 @@ import { crearRutaSegura, decodePolyline } from "../../hooks/rutas/rutaSegura";
 import { radioButtonOnOutline, trailSignOutline } from "ionicons/icons";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+import Sidebar from "../SideBar/SideBar";
+
+
+
 
 const MapaCanchas: React.FC = () => {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -46,6 +50,67 @@ const MapaCanchas: React.FC = () => {
   }
 };
 
+
+
+
+useEffect(() => {
+  const fetchContactLocations = async () => {
+    const db = getFirestore();
+    const auth = getAuth();
+    const myUid = auth.currentUser?.uid;
+    if (!myUid) return;
+    const usersCol = collection(db, "users");
+    const q = query(usersCol, where("trustedContacts", "array-contains", myUid));
+    const snap = await getDocs(q);
+    const locations = snap.docs
+      .map(doc => {
+        const data = doc.data();
+        if (data.location && data.displayName) {
+          return {
+            lat: data.location.latitude,
+            lng: data.location.longitude,
+            displayName: data.displayName
+          };
+        }
+        return null;
+      })
+      .filter(Boolean) as {lat: number, lng: number, displayName: string}[];
+    setContactLocations(locations);
+  };
+  fetchContactLocations();
+}, []);
+
+
+
+useEffect(() => {
+  if (!mapInstance.current || !mapReady) return;
+  // Renderiza los puntos de tus contactos
+  contactLocations.forEach(async (loc) => {
+    try {
+      const ids = await mapInstance.current!.addMarkers([
+        {
+          coordinate: { lat: loc.lat, lng: loc.lng },
+          iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          title: loc.displayName, // Esto muestra el nombre al hacer tap
+        }
+      ]);
+      // Opcional: puedes mostrar un label flotante con el nombre usando un overlay o infoWindow si tu librería lo permite
+    } catch {}
+  });
+}, [contactLocations, mapReady]);
+
+
+    useEffect(() => {
+  const auth = getAuth();
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loadMarkers();
+    } else {
+      
+    }
+  });
+  return () => unsubscribe();
+}, []);
 
 
     useEffect(() => {
