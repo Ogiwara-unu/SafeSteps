@@ -26,3 +26,18 @@
 .menu-content ion-item:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+
+ion-item {
+  --padding-start: 16px;
+  --padding-end: 16px;
+}
+
+/* Estilo cuando el modo offline está activo */
+ion-item[aria-checked="true"] {
+  --background: rgba(var(--ion-color-primary-rgb), 0.1);
+}
+
+ion-item[aria-checked="true"] ion-label {
+  color: var(--ion-color-primary);
+  font-weight: 500;
+}

@@ -1,4 +1,5 @@
 import { IonMenu, IonContent, IonList, IonItem, IonMenuToggle } from '@ionic/react';
+import ToggleOffline from '../toggleoffline/toggleoffline'; // Ruta ajustada
 import './SideBar.css';
 
 const Sidebar = () => {
@@ -13,7 +14,9 @@ const Sidebar = () => {
             <IonItem routerLink="/compartirUbicacion">Compartir Ubicación</IonItem>
             <IonItem routerLink="/config">Configuración</IonItem>
             <IonItem routerLink="/acerca">Acerca de</IonItem>
-            
+
+            {/* Botón de modo offline */}
+            <ToggleOffline />
           </IonMenuToggle>
         </IonList>
       </IonContent>

@@ -56,7 +56,8 @@ export const MarkerList: React.FC<MarkerListProps> = ({
                 fontWeight: 500,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
-                textOverflow: "ellipsis"
+                textOverflow: "ellipsis",
+                color: "#000"
               }}>
                 {marker.name}
               </p>

@@ -55,7 +55,7 @@ const MapaCanchas: React.FC = () => {
 
 
 
-
+/*
 useEffect(() => {
   const fetchContactLocations = async () => {
     const db = getFirestore();
@@ -102,7 +102,7 @@ useEffect(() => {
   });
 }, [contactLocations, mapReady]);
 
-
+*/
     useEffect(() => {
   const auth = getAuth();
   const unsubscribe = onAuthStateChanged(auth, (user) => {
