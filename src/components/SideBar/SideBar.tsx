@@ -10,9 +10,10 @@ const Sidebar = () => {
             <IonItem routerLink="/home">Inicio</IonItem>
             <IonItem routerLink="/mapas">Mapa</IonItem>
             <IonItem routerLink="/rutas">Rutas guardadas</IonItem>
-            <IonItem routerLink="/compartir">Compartir Ubicación</IonItem>
+            <IonItem routerLink="/compartirUbicacion">Compartir Ubicación</IonItem>
             <IonItem routerLink="/config">Configuración</IonItem>
             <IonItem routerLink="/acerca">Acerca de</IonItem>
+            
           </IonMenuToggle>
         </IonList>
       </IonContent>

@@ -8,6 +8,7 @@ import { MostrarDatosUsuario } from './pages/Configuración/config';
 import AcercaDe from './pages/AcercaDe/acerca';
 import Mapas from './pages/Mapa';
 import Rutas from './pages/rutas/rutas';
+import { CompartirUbi } from './pages/compartirUbicacionP/compartirUbicacion';
 
 
 /* Core CSS required for Ionic components to work properly */
@@ -69,6 +70,9 @@ const App: React.FC = () => (
         </Route>
          <Route exact path="/rutas">
           <Rutas/>
+        </Route>
+         <Route exact path="/compartirUbicacion">
+          <CompartirUbi/>
         </Route>
 
       </IonRouterOutlet>

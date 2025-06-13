@@ -30,6 +30,9 @@ const MapaCanchas: React.FC = () => {
   const [showList, setShowList] = useState(false);
   const [mapClean, setMapClean] = useState(true);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [contactLocations, setContactLocations] = useState<{lat: number, lng: number, displayName: string}[]>([]);
+
+
 
   // Hook para marcadores
   const {  markers, selectedMarkers,toggleMarkerSelection, loadMarkers, addMarker, deleteMarker, updateMarker } = useMarkers();
