@@ -9,7 +9,9 @@ const generateToken = (): string => {
 
 export const createOrUpdateUserDocument = async (
   user: User,
-  provider: 'password' | 'google', password?: string
+  provider: 'password' | 'google',
+  password?: string,
+  phoneNumber?: string 
 ): Promise<string | undefined> => {
   if (!user.email || !user.uid) return;
 
@@ -26,8 +28,9 @@ export const createOrUpdateUserDocument = async (
       createdAt: new Date(),
       displayName: user.displayName || '',
       trustedContacts: [],
-      password: password || '', // Por si es cuenta de Google
+      password: password || '',
       token,
+      phoneNumber: phoneNumber || '', 
     };
     await setDoc(userRef, newUser);
   } else {

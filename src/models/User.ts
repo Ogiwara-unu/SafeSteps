@@ -7,4 +7,5 @@ export interface UserData {
   password: string;
   trustedContacts?: string[];
   token?: string; 
+  phoneNumber:string;
 }

@@ -10,6 +10,7 @@ import './Login'; // usa el mismo CSS del login
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [userData, setUserData] = useState<any>(null);
@@ -23,7 +24,7 @@ export default function Register() {
         displayName: displayName
       });
 
-      await createOrUpdateUserDocument(userCredential.user, 'password', password);
+      await createOrUpdateUserDocument(userCredential.user, 'password', password,phoneNumber);
 
       history.push('/login');
     } catch (err: any) {
@@ -39,10 +40,12 @@ export default function Register() {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
         const token = await createOrUpdateUserDocument(user, 'google');
+        const phoneNumber = user.phoneNumber || '';
         const fullUser = {
           email: user.email,
           uid: user.uid,
           provider: 'google',
+          phoneNumber,
           token,
         };
         setUserData(fullUser);
@@ -78,6 +81,14 @@ export default function Register() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="input-field"
+        />
+
+        <label className='label-field'>Número de telefono</label>
+        <input
+          type="text"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
           className="input-field"
         />
 
