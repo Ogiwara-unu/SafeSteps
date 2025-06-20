@@ -1,79 +1,30 @@
 // src/contexts/OfflineContext.tsx
-import React, { createContext, useContext, useState, useEffect } from "react";
-import FirebaseService from "../firebase/firebasetoggleofflineservice";
+import { createContext, useContext, useState } from 'react';
+import { FirebaseService } from '../firebase/firebasetoggleofflineservice';
 
-interface OfflineContextProps {
+type OfflineContextType = {
   isOffline: boolean;
-  toggleOffline: () => Promise<void>;
-  setOffline: (value: boolean) => void;
-}
+  toggleOffline: () => void;
+};
 
-const OfflineContext = createContext<OfflineContextProps>({
+const OfflineContext = createContext<OfflineContextType>({
   isOffline: false,
-  toggleOffline: async () => {},
-  setOffline: () => {},
+  toggleOffline: () => {},
 });
 
-export const useOffline = () => useContext(OfflineContext);
-
 export const OfflineProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isOffline, setIsOffline] = useState(() => {
-    const saved = localStorage.getItem("isOffline");
-    return saved === "true";
-  });
+  const [isOffline, setIsOffline] = useState(false);
 
-  // Permite cambiar el estado manualmente (por el switch)
   const toggleOffline = async () => {
-    const newState = !isOffline;
+    const newState = await FirebaseService.toggleNetwork();
     setIsOffline(newState);
-    localStorage.setItem("isOffline", String(newState));
-    if (newState) {
-      await FirebaseService.forceOffline();
-    } else {
-      await FirebaseService.forceOnline();
-    }
   };
-
-  // Permite cambiar el estado desde eventos automáticos
-  const setOffline = (value: boolean) => {
-    setIsOffline(value);
-    localStorage.setItem("isOffline", String(value));
-    if (value) {
-      FirebaseService.forceOffline();
-    } else {
-      FirebaseService.forceOnline();
-    }
-  };
-
-  // Sincroniza el estado con Firebase al montar o cambiar
-  useEffect(() => {
-    if (isOffline) {
-      FirebaseService.forceOffline();
-    } else {
-      FirebaseService.forceOnline();
-    }
-  }, [isOffline]);
-
-  // Detecta cambios de conectividad y actualiza el estado automáticamente
-  useEffect(() => {
-    const handleOnline = () => setOffline(false);
-    const handleOffline = () => setOffline(true);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    // Al montar, ajusta según el estado real de la red
-    if (!navigator.onLine) setOffline(true);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
 
   return (
-    <OfflineContext.Provider value={{ isOffline, toggleOffline, setOffline }}>
+    <OfflineContext.Provider value={{ isOffline, toggleOffline }}>
       {children}
     </OfflineContext.Provider>
   );
 };
+
+export const useOffline = () => useContext(OfflineContext);

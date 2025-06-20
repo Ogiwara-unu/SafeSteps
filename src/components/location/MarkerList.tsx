@@ -1,5 +1,6 @@
 import { IonButton, IonIcon } from "@ionic/react";
 import { createOutline, trashOutline, radioButtonOnOutline, radioButtonOffOutline } from "ionicons/icons";
+import { Marker } from "../../hooks/markers/useMarkers";
 
 interface MarkerListProps {
   markers: Marker[];

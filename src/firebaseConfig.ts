@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, setPersistence, browserLocalPersistence, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
+import { getAuth , setPersistence, browserLocalPersistence, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { getMessaging } from "firebase/messaging";
 
 
@@ -24,27 +24,10 @@ export const googleProvider = new GoogleAuthProvider();
 
 const authReady = setPersistence(auth, browserLocalPersistence)
   .then(() => {
-    console.log("Persistencia de Auth configurada correctamente.");
+    console.log("Persistencia configurada correctamente.");
   })
   .catch((error) => {
-    console.error("Error al configurar la persistencia de Auth:", error);
+    console.error("Error al configurar la persistencia:", error);
   });
  
-// Habilita la persistencia offline de Firestore
-enableIndexedDbPersistence(db)
-  .then(() => {
-    console.log("Persistencia offline de Firestore habilitada.");
-  })
-  .catch((err) => {
-    if (err.code === 'failed-precondition') {
-      // Probablemente tienes varias pestañas abiertas
-      console.warn("Persistencia offline de Firestore no habilitada: varias pestañas abiertas.");
-    } else if (err.code === 'unimplemented') {
-      // El navegador no soporta persistencia
-      console.warn("Persistencia offline de Firestore no soportada en este navegador.");
-    } else {
-      console.error("Error al habilitar la persistencia offline de Firestore:", err);
-    }
-  });
-
 export { auth, db, messaging, authReady };

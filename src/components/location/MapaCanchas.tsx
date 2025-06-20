@@ -12,6 +12,9 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import Sidebar from "../SideBar/SideBar";
 
+
+
+
 const MapaCanchas: React.FC = () => {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<GoogleMap | null>(null);
@@ -29,77 +32,98 @@ const MapaCanchas: React.FC = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [contactLocations, setContactLocations] = useState<{lat: number, lng: number, displayName: string}[]>([]);
 
+
+
   // Hook para marcadores
-  const { markers, selectedMarkers, toggleMarkerSelection, addMarker, deleteMarker, updateMarker } = useMarkers();
+  const {  markers, selectedMarkers,toggleMarkerSelection, loadMarkers, addMarker, deleteMarker, updateMarker } = useMarkers();
 
-  const getSelectedMarkers = () => {
-    const seleccionados = markers.filter(m => selectedMarkers.includes(m.id));
-    console.log("Marcadores seleccionados:", seleccionados);
-    return seleccionados;
+
+ const getSelectedMarkers = () => {
+  const seleccionados = markers.filter(m => selectedMarkers.includes(m.id));
+  console.log("Marcadores seleccionados:", seleccionados);
+  return seleccionados;
+};
+
+
+
+ const dibujarRutaEntreSeleccionados = async () => {
+  const seleccionados = getSelectedMarkers();
+  if (seleccionados.length === 2) {
+    await dibujarRutaSeguraEnMapa(seleccionados);
+  }
+};
+
+
+
+/*
+useEffect(() => {
+  const fetchContactLocations = async () => {
+    const db = getFirestore();
+    const auth = getAuth();
+    const myUid = auth.currentUser?.uid;
+    if (!myUid) return;
+    const usersCol = collection(db, "users");
+    const q = query(usersCol, where("trustedContacts", "array-contains", myUid));
+    const snap = await getDocs(q);
+    const locations = snap.docs
+      .map(doc => {
+        const data = doc.data();
+        if (data.location && data.displayName) {
+          return {
+            lat: data.location.latitude,
+            lng: data.location.longitude,
+            displayName: data.displayName
+          };
+        }
+        return null;
+      })
+      .filter(Boolean) as {lat: number, lng: number, displayName: string}[];
+    setContactLocations(locations);
   };
+  fetchContactLocations();
+}, []);
 
-  const dibujarRutaEntreSeleccionados = async () => {
-    const seleccionados = getSelectedMarkers();
-    if (seleccionados.length === 2) {
-      await dibujarRutaSeguraEnMapa(seleccionados);
+
+
+useEffect(() => {
+  if (!mapInstance.current || !mapReady) return;
+  // Renderiza los puntos de tus contactos
+  contactLocations.forEach(async (loc) => {
+    try {
+      const ids = await mapInstance.current!.addMarkers([
+        {
+          coordinate: { lat: loc.lat, lng: loc.lng },
+          iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          title: loc.displayName, // Esto muestra el nombre al hacer tap
+        }
+      ]);
+      // Opcional: puedes mostrar un label flotante con el nombre usando un overlay o infoWindow si tu librería lo permite
+    } catch {}
+  });
+}, [contactLocations, mapReady]);
+
+*/
+    useEffect(() => {
+  const auth = getAuth();
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loadMarkers();
+    } else {
+      
     }
-  };
+  });
+  return () => unsubscribe();
+}, []);
 
-  /*
-  useEffect(() => {
-    const fetchContactLocations = async () => {
-      const db = getFirestore();
-      const auth = getAuth();
-      const myUid = auth.currentUser?.uid;
-      if (!myUid) return;
-      const usersCol = collection(db, "users");
-      const q = query(usersCol, where("trustedContacts", "array-contains", myUid));
-      const snap = await getDocs(q);
-      const locations = snap.docs
-        .map(doc => {
-          const data = doc.data();
-          if (data.location && data.displayName) {
-            return {
-              lat: data.location.latitude,
-              lng: data.location.longitude,
-              displayName: data.displayName
-            };
-          }
-          return null;
-        })
-        .filter(Boolean) as {lat: number, lng: number, displayName: string}[];
-      setContactLocations(locations);
-    };
-    fetchContactLocations();
-  }, []);
 
-  useEffect(() => {
-    if (!mapInstance.current || !mapReady) return;
-    // Renderiza los puntos de tus contactos
-    contactLocations.forEach(async (loc) => {
-      try {
-        const ids = await mapInstance.current!.addMarkers([
-          {
-            coordinate: { lat: loc.lat, lng: loc.lng },
-            iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-            title: loc.displayName, // Esto muestra el nombre al hacer tap
-          }
-        ]);
-        // Opcional: puedes mostrar un label flotante con el nombre usando un overlay o infoWindow si tu librería lo permite
-      } catch {}
-    });
-  }, [contactLocations, mapReady]);
-  */
-
-  // Eliminado el efecto de login que llamaba a loadMarkers()
-
-  useEffect(() => {
+    useEffect(() => {
     if (selectedMarkers.length === 2) {
       dibujarRutaEntreSeleccionados();
     } else {
       clearPolyline();
     }
   }, [selectedMarkers]);
+
 
   // --- Funciones para limpiar elementos del mapa ---
   const clearCircles = async () => {
@@ -212,98 +236,114 @@ const MapaCanchas: React.FC = () => {
   };
 
   // --- Renderizar marcadores ---
-  // ...existing code...
-const renderMarkers = async () => {
-  if (!mapInstance.current) return;
-  await clearMarkers();
-  console.log("Markers a renderizar en el mapa:", markers);
-  for (const marker of markers) {
-    try {
-      const iconUrl = marker.offline
-        ? "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png" // Amarillo para offline
-        : selectedMarkers.includes(marker.id)
-          ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-          : "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
-      const ids = await mapInstance.current.addMarkers([
-        {
-          coordinate: { lat: marker.lat, lng: marker.lng },
-          iconUrl,
-          title: marker.name,
-          snippet: `Lat: ${marker.lat.toFixed(4)}, Lng: ${marker.lng.toFixed(4)}`
-        }
-      ]);
-      markerIds.current[marker.id] = ids[0];
-    } catch (error) {
-      console.error("Error renderizando marcador:", error);
-    }
-  }
-};
-// ...existing code...
-
-  // --- Función para dibujar ruta segura en el mapa ---
-  const dibujarRutaSeguraEnMapa = async (puntos: { lat: number; lng: number }[]) => {
-    console.log("Iniciando dibujarRutaSeguraEnMapa con puntos:", puntos);
-
-    if (!mapInstance.current) {
-      console.error("El mapa no está inicializado");
-      return;
-    }
-
-    if (puntos.length < 2) {
-      console.error("Se necesitan al menos 2 puntos para crear una ruta");
-      return;
-    }
-
-    try {
-      // 1. Limpiar ruta anterior
-      await clearPolyline();
-
-      // 2. Crear ruta temporal (línea recta) para visualización inmediata
-
-      // 3. Obtener ruta optimizada de la API
-      const polylineEncoded = await crearRutaSegura(puntos);
-
-      if (!polylineEncoded) {
-        console.error("No se obtuvo ruta de la API");
-        return;
+   const renderMarkers = async () => {
+    if (!mapInstance.current) return;
+    await clearMarkers();
+    
+    for (const marker of markers) {
+      try {
+        const ids = await mapInstance.current.addMarkers([
+          {
+            coordinate: { lat: marker.lat, lng: marker.lng },
+            iconUrl: selectedMarkers.includes(marker.id) 
+              ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+              : "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+            title: marker.name,
+            snippet: `Lat: ${marker.lat.toFixed(4)}, Lng: ${marker.lng.toFixed(4)}`
+          }
+        ]);
+        markerIds.current[marker.id] = ids[0];
+      } catch (error) {
+        console.error("Error renderizando marcador:", error);
       }
-
-      // 4. Eliminar ruta temporal
-
-      // 5. Dibujar ruta definitiva
-      const puntosRuta = decodePolyline(polylineEncoded);
-      const polylineId = await mapInstance.current.addPolylines([
-        {
-          path: puntosRuta,
-          strokeColor: "#2E86DE", // Azul para ruta definitiva
-          strokeWeight: 4,
-          strokeOpacity: 1
-        }
-      ]);
-
-      trazoIdRef.current = polylineId[0];
-      console.log("Ruta dibujada con ID:", polylineId[0]);
-
-    } catch (error) {
-      console.error("Error completo al dibujar ruta:", error);
     }
   };
 
-  const dibujarRutaSimple = async (puntos: { lat: number; lng: number }[]) => {
-    if (!mapInstance.current || puntos.length < 2) return;
 
+   useEffect(() => {
+    if (mapReady) {
+      renderMarkers();
+    }
+  }, [selectedMarkers, mapReady]);
+
+
+  // --- Función para dibujar ruta segura en el mapa ---
+  const dibujarRutaSeguraEnMapa = async (puntos: { lat: number; lng: number }[]) => {
+
+  console.log("Iniciando dibujarRutaSeguraEnMapa con puntos:", puntos);
+
+  if (!mapInstance.current) {
+    console.error("El mapa no está inicializado");
+    return;
+  }
+
+  if (puntos.length < 2) {
+    console.error("Se necesitan al menos 2 puntos para crear una ruta");
+    return;
+  }
+
+  try {
+    // 1. Limpiar ruta anterior
     await clearPolyline();
+    
+    // 2. Crear ruta temporal (línea recta) para visualización inmediata
+   
+    
+    // 3. Obtener ruta optimizada de la API
+    const polylineEncoded = await crearRutaSegura(puntos);
+    
+    if (!polylineEncoded) {
+      console.error("No se obtuvo ruta de la API");
+      return;
+    }
 
+    // 4. Eliminar ruta temporal
+    
+    
+    // 5. Dibujar ruta definitiva
+    const puntosRuta = decodePolyline(polylineEncoded);
     const polylineId = await mapInstance.current.addPolylines([
       {
-        path: puntos,
-        strokeColor: "#00FF00", // Verde brillante para prueba
-        strokeWeight: 6
+        path: puntosRuta,
+        strokeColor: "#2E86DE", // Azul para ruta definitiva
+        strokeWeight: 4,
+        strokeOpacity: 1
       }
     ]);
 
     trazoIdRef.current = polylineId[0];
-  };
+    console.log("Ruta dibujada con ID:", polylineId[0]);
+
+  } catch (error) {
+    console.error("Error completo al dibujar ruta:", error);
+  }
+
+
+  
+};
+
+
+
+
+
+const dibujarRutaSimple = async (puntos: { lat: number; lng: number }[]) => {
+  if (!mapInstance.current || puntos.length < 2) return;
+  
+  await clearPolyline();
+  
+  const polylineId = await mapInstance.current.addPolylines([
+    {
+      path: puntos,
+      strokeColor: "#00FF00", // Verde brillante para prueba
+      strokeWeight: 6
+    }
+  ]);
+  
+  trazoIdRef.current = polylineId[0];
+};
+
+
+
 
   // --- Handlers de modal y marcadores ---
   const addCurrentLocationMarker = () => {
@@ -318,15 +358,12 @@ const renderMarkers = async () => {
     setShowModal(false);
     setMarkerName("");
     window.alert("¡Marcador agregado correctamente!");
-    // No llames a loadMarkers aquí, el listener lo hace
   };
 
   const handleDeleteMarker = async (id: string) => {
-  const marker = markers.find(m => m.id === id);
-  if (marker) {
-    await deleteMarker(marker.id, marker.name);
-  }
-};
+    await deleteMarker(id);
+    await loadMarkers();
+  };
 
   const handleEditMarker = (marker: any) => {
     setEditingMarker(marker);
@@ -340,7 +377,7 @@ const renderMarkers = async () => {
     setShowModal(false);
     setEditingMarker(null);
     setMarkerName("");
-    // No llames a loadMarkers aquí, el listener lo hace
+    await loadMarkers();
   };
 
   const cleanUpMap = async () => {
@@ -367,7 +404,7 @@ const renderMarkers = async () => {
   useEffect(() => {
     requestPermissions();
     startTracking();
-    // loadMarkers(); // Eliminado: el listener ya sincroniza
+    loadMarkers();
     return () => {
       stopTracking();
       cleanUpMap();
@@ -395,7 +432,6 @@ const renderMarkers = async () => {
 
   useEffect(() => {
     if (mapReady && mapInstance.current) {
-      console.log("Markers que llegan desde el hook:", markers);
       renderMarkers();
     }
   }, [markers, mapReady]);
@@ -405,6 +441,8 @@ const renderMarkers = async () => {
       <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
 
       {/* Botón de salir */}
+
+      
       <IonButton
         color="danger"
         style={{ position: "absolute", bottom: 20, left: 20, zIndex: 2000 }}
@@ -454,7 +492,7 @@ const renderMarkers = async () => {
         <IonButton onClick={addCurrentLocationMarker} shape="round" size="small" color="warning">
           <IonIcon icon={pinOutline} />
         </IonButton>
-        <IonButton onClick={() => dibujarRutaSeguraEnMapa(getSelectedMarkers())}>
+       <IonButton onClick={() => dibujarRutaSeguraEnMapa(getSelectedMarkers())}>
           🛣️
         </IonButton>
       </div>
@@ -479,27 +517,32 @@ const renderMarkers = async () => {
         </IonButton>
       </div>
 
-      {selectedMarkers.length === 2 && (
+
+
+
+         {selectedMarkers.length === 2 && (
         <div style={{
           position: 'absolute',
           bottom: '80px',
           right: '20px',
           zIndex: 1000
         }}>
-          <IonButton
-            onClick={async () => {
-              console.log("Iniciando creación de ruta...");
-              const seleccionados = getSelectedMarkers();
-              console.log("Puntos a enviar:", seleccionados);
-              await dibujarRutaSeguraEnMapa(seleccionados);
-              console.log("Proceso completado");
-            }}
+          <IonButton 
+           // En el onClick del botón
+        onClick={async () => {
+  console.log("Iniciando creación de ruta...");
+  const seleccionados = getSelectedMarkers();
+  console.log("Puntos a enviar:", seleccionados);
+  await dibujarRutaSeguraEnMapa(seleccionados);
+  console.log("Proceso completado");
+}}
           >
             <IonIcon slot="start" icon={trailSignOutline} />
             Crear Ruta
           </IonButton>
         </div>
       )}
+
 
       {/* Lista de marcadores */}
       {showList && (
