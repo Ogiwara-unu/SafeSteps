@@ -7,7 +7,6 @@ import Register from './pages/login/Register';
 import { MostrarDatosUsuario } from './pages/Configuración/config';
 import AcercaDe from './pages/AcercaDe/acerca';
 import Mapas from './pages/Mapa';
-import Rutas from './pages/rutas/rutas';
 import { CompartirUbi } from './pages/compartirUbicacionP/compartirUbicacion';
 import UbicacionesRecibidasPage from './pages/UbicacionesRecibidas/UbicacionesRecibidas';
 
@@ -68,9 +67,6 @@ const App: React.FC = () => (
         </Route>
          <Route exact path="/mapas">
           <Mapas/>
-        </Route>
-         <Route exact path="/rutas">
-          <Rutas/>
         </Route>
          <Route exact path="/compartirUbicacion">
           <CompartirUbi/>

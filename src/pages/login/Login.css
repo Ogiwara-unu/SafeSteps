@@ -1,25 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wdth,wght@0,18..144,87..112,300..900;1,18..144,87..112,300..900&display=swap');
 
-*{
-    font-family: 'Merriweather';
+/* Login.css */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* evita doble scroll */
 }
+
 .login-container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #F2F2F2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #F2F2F2;
+  height: 100vh; /* viewport height */
+  overflow-y: auto; /* <-- permite scroll solo vertical */
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .login-card {
-    width: 100%;
-    max-width: 360px;
-    padding: 24px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    background-color: #FFFFFF;
-
+  max-width: 400px;
+  width: 100%;
+  background-color: #FFFFFF;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
+*{
+    font-family: 'Merriweather';
+}
+
 
 .logo {
     height: 150px;

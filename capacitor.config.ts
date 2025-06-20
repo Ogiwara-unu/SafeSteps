@@ -5,17 +5,27 @@ const config: CapacitorConfig = {
   appName: 'SafeSteps',
   webDir: 'dist',
   bundledWebRuntime: false,
-  plugins: {
-    GoogleMaps: {
-      apiKey: "AIzaSyD32TSwPDCUrFbWea_r7zkCzuxfXXOZbkM",
-      androidKey: "AIzaSyD32TSwPDCUrFbWea_r7zkCzuxfXXOZbkM"
-    }
-  },
-    server: {
+  server: {
+    cleartext: true,
+    androidScheme: 'https',
     allowNavigation: [
       "maps.googleapis.com"
     ]
+  },
+  plugins: {
+     FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: [
+        "google.com"
+      ]
+    },
+    GoogleMaps: {
+      apiKey: "AIzaSyD32TSwPDCUrFbWea_r7zkCzuxfXXOZbkM",
+      androidKey: "AIzaSyD32TSwPDCUrFbWea_r7zkCzuxfXXOZbkM"
+    },
+    
   }
+  
 };
 
 export default config;
