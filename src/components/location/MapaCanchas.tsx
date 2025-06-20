@@ -32,6 +32,9 @@ const MapaCanchas: React.FC = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [contactLocations, setContactLocations] = useState<{lat: number, lng: number, displayName: string}[]>([]);
 
+  const [sharedLocations, setSharedLocations] = useState<
+  { lat: number; lng: number; from: string; timestamp?: any }[]
+>([]);
 
 
   // Hook para marcadores
@@ -54,55 +57,6 @@ const MapaCanchas: React.FC = () => {
 };
 
 
-
-/*
-useEffect(() => {
-  const fetchContactLocations = async () => {
-    const db = getFirestore();
-    const auth = getAuth();
-    const myUid = auth.currentUser?.uid;
-    if (!myUid) return;
-    const usersCol = collection(db, "users");
-    const q = query(usersCol, where("trustedContacts", "array-contains", myUid));
-    const snap = await getDocs(q);
-    const locations = snap.docs
-      .map(doc => {
-        const data = doc.data();
-        if (data.location && data.displayName) {
-          return {
-            lat: data.location.latitude,
-            lng: data.location.longitude,
-            displayName: data.displayName
-          };
-        }
-        return null;
-      })
-      .filter(Boolean) as {lat: number, lng: number, displayName: string}[];
-    setContactLocations(locations);
-  };
-  fetchContactLocations();
-}, []);
-
-
-
-useEffect(() => {
-  if (!mapInstance.current || !mapReady) return;
-  // Renderiza los puntos de tus contactos
-  contactLocations.forEach(async (loc) => {
-    try {
-      const ids = await mapInstance.current!.addMarkers([
-        {
-          coordinate: { lat: loc.lat, lng: loc.lng },
-          iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-          title: loc.displayName, // Esto muestra el nombre al hacer tap
-        }
-      ]);
-      // Opcional: puedes mostrar un label flotante con el nombre usando un overlay o infoWindow si tu librería lo permite
-    } catch {}
-  });
-}, [contactLocations, mapReady]);
-
-*/
     useEffect(() => {
   const auth = getAuth();
   const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -177,6 +131,37 @@ useEffect(() => {
     } catch {}
   }
 
+  /* -------------------------------------------------------------------------------------------------- */
+  /* ---------------------------FUNCION PARA CARGAR UBIS COMPARTIDAS----------------------------------- */
+  /* -------------------------------------------------------------------------------------------------- */
+  const loadSharedLocations = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) return;
+  const db = getFirestore();
+  const ref = collection(db, "users", user.uid, "sharedLocations");
+  const q = query(ref, where("compartiendo", "==", true));
+  const snap = await getDocs(q);
+  const locations = snap.docs
+    .map(doc => doc.data())
+    .filter(d => d.location)
+    .map(d => ({
+      lat: d.location.latitude,
+      lng: d.location.longitude,
+      from: d.from,
+      timestamp: d.timestamp
+    }));
+  setSharedLocations(locations);
+   console.log("Ubicaciones compartidas cargadas:", locations);
+};
+
+useEffect(() => {
+  loadSharedLocations();
+  const interval = setInterval(loadSharedLocations, 10000); // refresca cada 10s
+  return () => clearInterval(interval);
+}, []);
+
+
   // --- Actualizar círculos de ubicación ---
   const updateLocationCircles = async () => {
     if (!mapReady || !mapInstance.current || !location?.coords) return;
@@ -237,34 +222,52 @@ useEffect(() => {
 
   // --- Renderizar marcadores ---
    const renderMarkers = async () => {
-    if (!mapInstance.current) return;
-    await clearMarkers();
-    
-    for (const marker of markers) {
-      try {
-        const ids = await mapInstance.current.addMarkers([
-          {
-            coordinate: { lat: marker.lat, lng: marker.lng },
-            iconUrl: selectedMarkers.includes(marker.id) 
-              ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-              : "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-            title: marker.name,
-            snippet: `Lat: ${marker.lat.toFixed(4)}, Lng: ${marker.lng.toFixed(4)}`
-          }
-        ]);
-        markerIds.current[marker.id] = ids[0];
-      } catch (error) {
-        console.error("Error renderizando marcador:", error);
-      }
+  if (!mapInstance.current) return;
+  await clearMarkers();
+
+  // Marcadores propios
+  for (const marker of markers) {
+    try {
+      const ids = await mapInstance.current.addMarkers([
+        {
+          coordinate: { lat: marker.lat, lng: marker.lng },
+          iconUrl: selectedMarkers.includes(marker.id)
+            ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+            : "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+          title: marker.name,
+          snippet: `Lat: ${marker.lat.toFixed(4)}, Lng: ${marker.lng.toFixed(4)}`
+        }
+      ]);
+      markerIds.current[marker.id] = ids[0];
+    } catch (error) {
+      console.error("Error renderizando marcador:", error);
     }
-  };
+  }
+
+  // Marcadores de ubicaciones compartidas
+  for (const shared of sharedLocations) {
+    try {
+      const ids = await mapInstance.current.addMarkers([
+        {
+          coordinate: { lat: shared.lat, lng: shared.lng },
+          iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          title: `Ubicación compartida`,
+          snippet: `De: ${shared.from}\nLat: ${shared.lat.toFixed(4)}, Lng: ${shared.lng.toFixed(4)}`
+        }
+      ]);
+      // No necesitas guardar el id si no vas a manipularlos individualmente
+    } catch (error) {
+      console.error("Error renderizando ubicación compartida:", error);
+    }
+  }
+};
 
 
    useEffect(() => {
     if (mapReady) {
       renderMarkers();
     }
-  }, [selectedMarkers, mapReady]);
+  }, [selectedMarkers, mapReady,sharedLocations]);
 
 
   // --- Función para dibujar ruta segura en el mapa ---
@@ -321,29 +324,6 @@ useEffect(() => {
 
   
 };
-
-
-
-
-
-const dibujarRutaSimple = async (puntos: { lat: number; lng: number }[]) => {
-  if (!mapInstance.current || puntos.length < 2) return;
-  
-  await clearPolyline();
-  
-  const polylineId = await mapInstance.current.addPolylines([
-    {
-      path: puntos,
-      strokeColor: "#00FF00", // Verde brillante para prueba
-      strokeWeight: 6
-    }
-  ]);
-  
-  trazoIdRef.current = polylineId[0];
-};
-
-
-
 
   // --- Handlers de modal y marcadores ---
   const addCurrentLocationMarker = () => {
