@@ -27,3 +27,5 @@ export class FirebaseService {
     this.isOffline = true;
   }
 }
+
+export default FirebaseService;

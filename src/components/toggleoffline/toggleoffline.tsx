@@ -10,7 +10,7 @@ const ToggleOffline = () => {
       <IonLabel>Modo Offline</IonLabel>
       <IonToggle 
         checked={isOffline} 
-        onIonChange={toggleOffline} 
+        disabled
         color="primary"
       />
     </IonItem>

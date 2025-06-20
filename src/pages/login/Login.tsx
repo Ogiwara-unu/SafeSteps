@@ -29,6 +29,17 @@ export default function CustomLogin() {
       setUserData(fullUser);
       history.push('/home');
     } catch (err: any) {
+      // Permitir acceso si hay usuario autenticado en caché (modo offline)
+      if (auth.currentUser) {
+        setUserData({
+          email: auth.currentUser.email,
+          uid: auth.currentUser.uid,
+          provider: 'password',
+          token: null,
+        });
+        history.push('/home');
+        return;
+      }
       console.error(err);
       if (err.code === 'auth/user-not-found') setError('Usuario no encontrado');
       else if (err.code === 'auth/wrong-password') setError('Contraseña incorrecta');
@@ -51,6 +62,17 @@ export default function CustomLogin() {
       setUserData(fullUser);
       history.push('/home');
     } catch (err: any) {
+      // Permitir acceso si hay usuario autenticado en caché (modo offline)
+      if (auth.currentUser) {
+        setUserData({
+          email: auth.currentUser.email,
+          uid: auth.currentUser.uid,
+          provider: 'google',
+          token: null,
+        });
+        history.push('/home');
+        return;
+      }
       console.error(err);
       setError('Error al iniciar sesión con Google');
     }
