@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wdth,wght@0,18..144,87..112,300..900;1,18..144,87..112,300..900&display=swap');
+
+.ubicaciones-recibidas-content {
+    padding: 20px;
+    
+}
+
+.ubicaciones-recibidas-container {
+    max-width: 500px;
+    margin: 40px auto;
+}
+
+.ubicaciones-titulo {
+
+    text-align: center;
+    font-size: 1.5rem;
+    font-family: 'Merriweather';
+    margin-bottom: 24px;
+    color: #9ca38e;
+}
+
+.ubicaciones-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ubicacion-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.ubicacion-item:last-child {
+    border-bottom: none;
+}
+strong{
+    padding-right: 5px;
+}
+
+.ubicacion-item p {
+    font-family: 'Georgia', serif;
+    color: #3d4037;
+    margin: 4px 0;
+}
+
+.ubicaciones-mensaje {
+    text-align: center;
+    color: #666;
+}

@@ -1,67 +1,146 @@
 import React, { useState, useEffect } from "react";
-import { ShareLocation } from "../../components/location/compartirLocalizacion/ShareLocation";
-import { getFirestore, collection, getDocs, onSnapshot } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  arrayUnion,
+  arrayRemove,
+  getDoc,
+} from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
+import { ShareLocationButton } from "../../hooks/realTimeLocation/ShareLocationButton";
 import "./compartirUbicacion.css";
 import Sidebar from "../../components/SideBar/SideBar";
 import Topbar from "../../components/TopBar/TopBar";
 import { IonPage, IonContent } from "@ionic/react";
+import { Modal } from "./Modal/Modal";
 
 interface Usuario {
   id: string;
   displayName: string;
   email?: string;
+  isTrusted?: boolean;
+  wasTrusted?: boolean;
 }
 
 export const CompartirUbi: React.FC = () => {
-  const { user, loading } = useAuth(); // ✅ hook en la raíz del componente
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [seleccionados, setSeleccionados] = useState<string[]>([]);
-  const [ubicacionesRecibidas, setUbicacionesRecibidas] = useState<any[]>([]);
+  const { user } = useAuth();
+  const [allUsers, setAllUsers] = useState<Usuario[]>([]);
+  const [trustedContacts, setTrustedContacts] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false); // NUEVO
 
-  // Obtener usuarios para la lista
   useEffect(() => {
-    const fetchUsuarios = async () => {
+    const fetchData = async () => {
+      if (!user?.uid) return;
+
+      setLoading(true);
       const db = getFirestore();
-      const usuariosCol = collection(db, "users");
-      const usuariosSnap = await getDocs(usuariosCol);
-      const usuariosList = usuariosSnap.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          displayName: data.displayName || data.email || "Sin nombre",
-          email: data.email,
-        };
-      }) as Usuario[];
-      setUsuarios(usuariosList);
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userData = userDoc.data();
+        const currentTrusted = userData?.trustedContacts || [];
+
+        setTrustedContacts(currentTrusted);
+
+        const usersSnap = await getDocs(collection(db, "users"));
+        const usersList = usersSnap.docs
+          .filter((doc) => doc.id !== user.uid)
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              displayName: data.displayName || data.email || "Usuario sin nombre",
+              email: data.email,
+              isTrusted: currentTrusted.includes(doc.id),
+              wasTrusted: userData?.trustedContactsHistory?.some(
+                (c: any) => c.userId === doc.id
+              ),
+            };
+          });
+
+        setAllUsers(usersList);
+      } catch (error) {
+        console.error("Error al cargar datos:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchUsuarios();
-  }, []);
 
-  // Escuchar ubicaciones compartidas conmigo
-  useEffect(() => {
-    if (!user) return;
-    const db = getFirestore();
-    console.log("Usuario autenticado:", user);
-
-    const ref = collection(db, "users", user.uid, "sharedLocations");
-    const unsub = onSnapshot(ref, (snapshot) => {
-      const ubicaciones = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      console.log("Ubicaciones recibidas:", ubicaciones);
-      setUbicacionesRecibidas(ubicaciones);
-    });
-
-    return () => unsub();
+    fetchData();
   }, [user]);
 
-  const toggleSeleccion = (id: string) => {
-    setSeleccionados((prev) =>
-      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
-    );
+  const toggleContact = async (userId: string) => {
+    if (!user?.uid) return;
+
+    const db = getFirestore();
+    const userRef = doc(db, "users", user.uid);
+
+    try {
+      if (trustedContacts.includes(userId)) {
+        await setDoc(
+          userRef,
+          {
+            trustedContacts: arrayRemove(userId),
+            trustedContactsHistory: arrayUnion({
+              userId,
+              removedAt: new Date(),
+            }),
+          },
+          { merge: true }
+        );
+        setTrustedContacts((prev) => prev.filter((id) => id !== userId));
+      } else {
+        await setDoc(
+          userRef,
+          {
+            trustedContacts: arrayUnion(userId),
+            trustedContactsHistory: arrayUnion({
+              userId,
+              addedAt: new Date(),
+            }),
+          },
+          { merge: true }
+        );
+        setTrustedContacts((prev) => [...prev, userId]);
+      }
+
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId
+            ? {
+                ...u,
+                isTrusted: !u.isTrusted,
+                wasTrusted: true,
+              }
+            : u
+        )
+      );
+    } catch (error) {
+      console.error("Error al actualizar contactos:", error);
+    }
   };
+
+  const trustedUsers = allUsers.filter((u) => u.isTrusted);
+  const historicalUsers = allUsers.filter((u) => !u.isTrusted && u.wasTrusted);
+  const otherUsers = allUsers.filter((u) => !u.isTrusted && !u.wasTrusted);
+
+  if (loading) {
+    return (
+      <>
+        <Sidebar />
+        <IonPage id="main-content">
+          <Topbar />
+          <IonContent className="compartir-ubi-content">
+            <div className="loading">Cargando contactos...</div>
+          </IonContent>
+        </IonPage>
+      </>
+    );
+  }
 
   return (
     <>
@@ -69,59 +148,93 @@ export const CompartirUbi: React.FC = () => {
       <IonPage id="main-content">
         <Topbar />
         <IonContent className="compartir-ubi-content">
-          <div className="compartir-ubi-container">
-            <h3>Selecciona personas para compartir tu ubicación:</h3>
-            <ul className="compartir-ubi-list">
-              {usuarios.map((u) => (
-                <li key={u.id}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={seleccionados.includes(u.id)}
-                      onChange={() => toggleSeleccion(u.id)}
-                    />
-                    {u.displayName}
-                  </label>
-                </li>
-              ))}
-            </ul>
+          <div className="container">
 
-            {/* Ubicaciones compartidas contigo */}
-            <div style={{ margin: "24px 0" }}>
-              <h4>Ubicaciones que han compartido contigo:</h4>
-              {ubicacionesRecibidas.length === 0 ? (
-                <div style={{ color: "#888" }}>Nadie ha compartido ubicación contigo aún.</div>
-              ) : (
-                <ul>
-                  {ubicacionesRecibidas.map((ubi) => (
-                    <li key={ubi.id}>
-                      <strong>De:</strong> {ubi.from} <br />
-                      <strong>Lat:</strong> {ubi.location?.latitude} <br />
-                      <strong>Lng:</strong> {ubi.location?.longitude} <br />
-                      <strong>Fecha:</strong>{" "}
-                      {ubi.timestamp instanceof Date
-                        ? ubi.timestamp.toLocaleString()
-                        : ubi.timestamp?.toDate
-                        ? ubi.timestamp.toDate().toLocaleString()
-                        : ubi.timestamp?.seconds
-                        ? new Date(ubi.timestamp.seconds * 1000).toLocaleString()
-                        : "Fecha no disponible"}
-                    </li>
-                  ))}
-                </ul>
-              )}
+
+            <h1>Mis Contactos</h1>
+
+            {/* Sección de contactos actuales e históricos */}
+            <div className="trusted-section">
+
+              <div className="contacts-group">
+            
+                {trustedUsers.length > 0 ? (
+                  <ul className="contacts-list">
+                    {trustedUsers.map((user) => (
+                      <li key={user.id} className="contact-item active">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={true}
+                            onChange={() => toggleContact(user.id)}
+                          />
+                          <span className="contact-name">{user.displayName}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-message">No tienes contactos activos</p>
+                )}
+
+                {historicalUsers.length > 0 ? (
+                  <ul className="contacts-list">
+                    {historicalUsers.map((user) => (
+                      <li key={user.id} className="contact-item historical">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={false}
+                            onChange={() => toggleContact(user.id)}
+                          />
+                          <span className="contact-name">{user.displayName}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="empty-message">No hay contactos históricos</p>
+                )}
+              </div>
             </div>
 
-            <ShareLocation
-              userIds={seleccionados}
-              buttonClass="compartir-ubi-btn"
-              messageClass="compartir-ubi-msg"
-            />
+            {/* Botón para compartir ubicación */}
+            <div className="share-section">
+              <ShareLocationButton
+                userIds={trustedContacts}
+                buttonClass="share-button"
+              />
+            </div>
           </div>
         </IonContent>
       </IonPage>
+
+      {/* Botón flotante */}
+      <button className="floating-add-button" onClick={() => setIsModalOpen(true)}>+</button>
+
+      {/* Modal de todos los usuarios */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <h2>Agregar Usuarios</h2>
+        {otherUsers.length > 0 ? (
+          <ul className="contacts-list">
+            {otherUsers.map((user) => (
+              <li key={user.id} className="contact-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={false}
+                    onChange={() => toggleContact(user.id)}
+                  />
+                  <span className="contact-name">{user.displayName}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-message">No hay otros usuarios disponibles</p>
+        )}
+      </Modal>
+
     </>
   );
 };
-
-export default CompartirUbi;

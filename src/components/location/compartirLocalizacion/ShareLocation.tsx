@@ -4,7 +4,7 @@ import { getFirestore, collection, addDoc, setDoc, query, where, getDocs, doc } 
 import { getAuth } from "firebase/auth";
 
 interface ShareLocationProps {
-  userIds: string[];
+  userIds: string[]
   buttonClass?: string;
   messageClass?: string;
 }

@@ -14,6 +14,7 @@ const Sidebar = () => {
             <IonItem routerLink="/compartirUbicacion">Compartir Ubicación</IonItem>
             <IonItem routerLink="/config">Configuración</IonItem>
             <IonItem routerLink="/acerca">Acerca de</IonItem>
+            <IonItem routerLink="/ubicacionesRecibidas">Ubicaciones Recibidas</IonItem>
 
             {/* Botón de modo offline */}
             <ToggleOffline />

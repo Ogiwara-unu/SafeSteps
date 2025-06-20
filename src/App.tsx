@@ -9,6 +9,7 @@ import AcercaDe from './pages/AcercaDe/acerca';
 import Mapas from './pages/Mapa';
 import Rutas from './pages/rutas/rutas';
 import { CompartirUbi } from './pages/compartirUbicacionP/compartirUbicacion';
+import UbicacionesRecibidasPage from './pages/UbicacionesRecibidas/UbicacionesRecibidas';
 
 
 /* Core CSS required for Ionic components to work properly */
@@ -73,6 +74,9 @@ const App: React.FC = () => (
         </Route>
          <Route exact path="/compartirUbicacion">
           <CompartirUbi/>
+        </Route>
+        <Route exact path="/ubicacionesRecibidas">
+          <UbicacionesRecibidasPage/>
         </Route>
 
       </IonRouterOutlet>
