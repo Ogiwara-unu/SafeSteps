@@ -160,8 +160,6 @@ useEffect(() => {
   const interval = setInterval(loadSharedLocations, 10000); // refresca cada 10s
   return () => clearInterval(interval);
 }, []);
-
-
   // --- Actualizar círculos de ubicación ---
   const updateLocationCircles = async () => {
     if (!mapReady || !mapInstance.current || !location?.coords) return;
@@ -203,7 +201,6 @@ useEffect(() => {
       circleIds.current = newCircleIds;
     } catch {}
   };
-
   // --- Centrar mapa en ubicación ---
   const centerMapOnLocation = async () => {
     if (mapInstance.current && location?.coords) {
@@ -219,12 +216,10 @@ useEffect(() => {
       } catch {}
     }
   };
-
   // --- Renderizar marcadores ---
    const renderMarkers = async () => {
   if (!mapInstance.current) return;
   await clearMarkers();
-
   // Marcadores propios
   for (const marker of markers) {
     try {
@@ -243,7 +238,6 @@ useEffect(() => {
       console.error("Error renderizando marcador:", error);
     }
   }
-
   // Marcadores de ubicaciones compartidas
   for (const shared of sharedLocations) {
     try {
@@ -261,7 +255,6 @@ useEffect(() => {
     }
   }
 };
-
 
    useEffect(() => {
     if (mapReady) {
@@ -289,9 +282,6 @@ useEffect(() => {
     // 1. Limpiar ruta anterior
     await clearPolyline();
     
-    // 2. Crear ruta temporal (línea recta) para visualización inmediata
-   
-    
     // 3. Obtener ruta optimizada de la API
     const polylineEncoded = await crearRutaSegura(puntos);
     
@@ -300,9 +290,6 @@ useEffect(() => {
       return;
     }
 
-    // 4. Eliminar ruta temporal
-    
-    
     // 5. Dibujar ruta definitiva
     const puntosRuta = decodePolyline(polylineEncoded);
     const polylineId = await mapInstance.current.addPolylines([
@@ -472,9 +459,6 @@ useEffect(() => {
         <IonButton onClick={addCurrentLocationMarker} shape="round" size="small" color="warning">
           <IonIcon icon={pinOutline} />
         </IonButton>
-       <IonButton onClick={() => dibujarRutaSeguraEnMapa(getSelectedMarkers())}>
-          🛣️
-        </IonButton>
       </div>
 
       {/* Botón flotante para mostrar/ocultar la lista */}
@@ -496,10 +480,6 @@ useEffect(() => {
           <IonIcon icon={showList ? closeOutline : listOutline} />
         </IonButton>
       </div>
-
-
-
-
          {selectedMarkers.length === 2 && (
         <div style={{
           position: 'absolute',
@@ -522,7 +502,6 @@ useEffect(() => {
           </IonButton>
         </div>
       )}
-
 
       {/* Lista de marcadores */}
       {showList && (
