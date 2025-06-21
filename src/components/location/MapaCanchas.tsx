@@ -11,7 +11,8 @@ import { radioButtonOnOutline, trailSignOutline } from "ionicons/icons";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import Sidebar from "../SideBar/SideBar";
-import { notificarContactosDeConfianza } from "../../services/notification/notificarContactos"; 
+import { notificarContactosDeConfianza } from "../../services/notification/notificarContactos";
+import { warningOutline, logOutOutline } from 'ionicons/icons';
 
 
 
@@ -31,49 +32,36 @@ const MapaCanchas: React.FC = () => {
   const [showList, setShowList] = useState(false);
   const [mapClean, setMapClean] = useState(true);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [contactLocations, setContactLocations] = useState<{lat: number, lng: number, displayName: string}[]>([]);
+  const [contactLocations, setContactLocations] = useState<{ lat: number, lng: number, displayName: string }[]>([]);
 
   const [sharedLocations, setSharedLocations] = useState<
-  { lat: number; lng: number; from: string; timestamp?: any }[]
->([]);
+    { lat: number; lng: number; from: string; timestamp?: any }[]
+  >([]);
 
 
   // Hook para marcadores
-  const {  markers, selectedMarkers,toggleMarkerSelection, loadMarkers, addMarker, deleteMarker, updateMarker } = useMarkers();
+  const { markers, selectedMarkers, toggleMarkerSelection, addMarker, deleteMarker, updateMarker } = useMarkers();
 
 
- const getSelectedMarkers = () => {
-  const seleccionados = markers.filter(m => selectedMarkers.includes(m.id));
-  console.log("Marcadores seleccionados:", seleccionados);
-  return seleccionados;
-};
+  const getSelectedMarkers = () => {
+    const seleccionados = markers.filter(m => selectedMarkers.includes(m.id));
+    console.log("Marcadores seleccionados:", seleccionados);
+    return seleccionados;
+  };
 
 
 
 
 
- const dibujarRutaEntreSeleccionados = async () => {
-  const seleccionados = getSelectedMarkers();
-  if (seleccionados.length === 2) {
-    await dibujarRutaSeguraEnMapa(seleccionados);
-  }
-};
-
-
-    useEffect(() => {
-  const auth = getAuth();
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
-    if (user) {
-      loadMarkers();
-    } else {
-      
+  const dibujarRutaEntreSeleccionados = async () => {
+    const seleccionados = getSelectedMarkers();
+    if (seleccionados.length === 2) {
+      await dibujarRutaSeguraEnMapa(seleccionados);
     }
-  });
-  return () => unsubscribe();
-}, []);
+  };
 
 
-    useEffect(() => {
+  useEffect(() => {
     if (selectedMarkers.length === 2) {
       dibujarRutaEntreSeleccionados();
     } else {
@@ -87,7 +75,7 @@ const MapaCanchas: React.FC = () => {
     if (mapInstance.current && circleIds.current.length > 0) {
       try {
         await mapInstance.current.removeCircles(circleIds.current);
-      } catch {}
+      } catch { }
       circleIds.current = [];
     }
   };
@@ -96,7 +84,7 @@ const MapaCanchas: React.FC = () => {
     if (mapInstance.current && Object.values(markerIds.current).length > 0) {
       try {
         await mapInstance.current.removeMarkers(Object.values(markerIds.current));
-      } catch {}
+      } catch { }
       markerIds.current = {};
     }
   };
@@ -105,7 +93,7 @@ const MapaCanchas: React.FC = () => {
     if (mapInstance.current && trazoIdRef.current) {
       try {
         await mapInstance.current.removePolylines([trazoIdRef.current]);
-      } catch {}
+      } catch { }
       trazoIdRef.current = null;
     }
   };
@@ -131,38 +119,38 @@ const MapaCanchas: React.FC = () => {
         },
       });
       setMapReady(true);
-    } catch {}
+    } catch { }
   }
 
   /* -------------------------------------------------------------------------------------------------- */
   /* ---------------------------FUNCION PARA CARGAR UBIS COMPARTIDAS----------------------------------- */
   /* -------------------------------------------------------------------------------------------------- */
   const loadSharedLocations = async () => {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  if (!user) return;
-  const db = getFirestore();
-  const ref = collection(db, "users", user.uid, "sharedLocations");
-  const q = query(ref, where("compartiendo", "==", true));
-  const snap = await getDocs(q);
-  const locations = snap.docs
-    .map(doc => doc.data())
-    .filter(d => d.location)
-    .map(d => ({
-      lat: d.location.latitude,
-      lng: d.location.longitude,
-      from: d.from,
-      timestamp: d.timestamp
-    }));
-  setSharedLocations(locations);
-   console.log("Ubicaciones compartidas cargadas:", locations);
-};
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) return;
+    const db = getFirestore();
+    const ref = collection(db, "users", user.uid, "sharedLocations");
+    const q = query(ref, where("compartiendo", "==", true));
+    const snap = await getDocs(q);
+    const locations = snap.docs
+      .map(doc => doc.data())
+      .filter(d => d.location)
+      .map(d => ({
+        lat: d.location.latitude,
+        lng: d.location.longitude,
+        from: d.from,
+        timestamp: d.timestamp
+      }));
+    setSharedLocations(locations);
+    console.log("Ubicaciones compartidas cargadas:", locations);
+  };
 
-useEffect(() => {
-  loadSharedLocations();
-  const interval = setInterval(loadSharedLocations, 10000); // refresca cada 10s
-  return () => clearInterval(interval);
-}, []);
+  useEffect(() => {
+    loadSharedLocations();
+    const interval = setInterval(loadSharedLocations, 10000); // refresca cada 10s
+    return () => clearInterval(interval);
+  }, []);
   // --- Actualizar círculos de ubicación ---
   const updateLocationCircles = async () => {
     if (!mapReady || !mapInstance.current || !location?.coords) return;
@@ -202,7 +190,7 @@ useEffect(() => {
         },
       ]);
       circleIds.current = newCircleIds;
-    } catch {}
+    } catch { }
   };
   // --- Centrar mapa en ubicación ---
   const centerMapOnLocation = async () => {
@@ -216,104 +204,104 @@ useEffect(() => {
           zoom: 15,
           animate: true,
         });
-      } catch {}
+      } catch { }
     }
   };
   // --- Renderizar marcadores ---
-   const renderMarkers = async () => {
-  if (!mapInstance.current) return;
-  await clearMarkers();
-  // Marcadores propios
-  for (const marker of markers) {
-    try {
-      const ids = await mapInstance.current.addMarkers([
-        {
-          coordinate: { lat: marker.lat, lng: marker.lng },
-          iconUrl: selectedMarkers.includes(marker.id)
-            ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-            : "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-          title: marker.name,
-          snippet: `Lat: ${marker.lat.toFixed(4)}, Lng: ${marker.lng.toFixed(4)}`
-        }
-      ]);
-      markerIds.current[marker.id] = ids[0];
-    } catch (error) {
-      console.error("Error renderizando marcador:", error);
+  const renderMarkers = async () => {
+    if (!mapInstance.current) return;
+    await clearMarkers();
+    // Marcadores propios
+    for (const marker of markers) {
+      try {
+        const ids = await mapInstance.current.addMarkers([
+          {
+            coordinate: { lat: marker.lat, lng: marker.lng },
+            iconUrl: selectedMarkers.includes(marker.id)
+              ? "https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+              : "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+            title: marker.name,
+            snippet: `Lat: ${marker.lat.toFixed(4)}, Lng: ${marker.lng.toFixed(4)}`
+          }
+        ]);
+        markerIds.current[marker.id] = ids[0];
+      } catch (error) {
+        console.error("Error renderizando marcador:", error);
+      }
     }
-  }
-  // Marcadores de ubicaciones compartidas
-  for (const shared of sharedLocations) {
-    try {
-      const ids = await mapInstance.current.addMarkers([
-        {
-          coordinate: { lat: shared.lat, lng: shared.lng },
-          iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-          title: `Ubicación compartida`,
-          snippet: `De: ${shared.from}\nLat: ${shared.lat.toFixed(4)}, Lng: ${shared.lng.toFixed(4)}`
-        }
-      ]);
-      // No necesitas guardar el id si no vas a manipularlos individualmente
-    } catch (error) {
-      console.error("Error renderizando ubicación compartida:", error);
+    // Marcadores de ubicaciones compartidas
+    for (const shared of sharedLocations) {
+      try {
+        const ids = await mapInstance.current.addMarkers([
+          {
+            coordinate: { lat: shared.lat, lng: shared.lng },
+            iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            title: `Ubicación compartida`,
+            snippet: `De: ${shared.from}\nLat: ${shared.lat.toFixed(4)}, Lng: ${shared.lng.toFixed(4)}`
+          }
+        ]);
+        // No necesitas guardar el id si no vas a manipularlos individualmente
+      } catch (error) {
+        console.error("Error renderizando ubicación compartida:", error);
+      }
     }
-  }
-};
+  };
 
-   useEffect(() => {
+  useEffect(() => {
     if (mapReady) {
       renderMarkers();
     }
-  }, [selectedMarkers, mapReady,sharedLocations]);
+  }, [selectedMarkers, mapReady, sharedLocations]);
 
 
   // --- Función para dibujar ruta segura en el mapa ---
   const dibujarRutaSeguraEnMapa = async (puntos: { lat: number; lng: number }[]) => {
 
-  console.log("Iniciando dibujarRutaSeguraEnMapa con puntos:", puntos);
+    console.log("Iniciando dibujarRutaSeguraEnMapa con puntos:", puntos);
 
-  if (!mapInstance.current) {
-    console.error("El mapa no está inicializado");
-    return;
-  }
-
-  if (puntos.length < 2) {
-    console.error("Se necesitan al menos 2 puntos para crear una ruta");
-    return;
-  }
-
-  try {
-    // 1. Limpiar ruta anterior
-    await clearPolyline();
-    
-    // 3. Obtener ruta optimizada de la API
-    const polylineEncoded = await crearRutaSegura(puntos);
-    
-    if (!polylineEncoded) {
-      console.error("No se obtuvo ruta de la API");
+    if (!mapInstance.current) {
+      console.error("El mapa no está inicializado");
       return;
     }
 
-    // 5. Dibujar ruta definitiva
-    const puntosRuta = decodePolyline(polylineEncoded);
-    const polylineId = await mapInstance.current.addPolylines([
-      {
-        path: puntosRuta,
-        strokeColor: "#2E86DE", // Azul para ruta definitiva
-        strokeWeight: 4,
-        strokeOpacity: 1
+    if (puntos.length < 2) {
+      console.error("Se necesitan al menos 2 puntos para crear una ruta");
+      return;
+    }
+
+    try {
+      // 1. Limpiar ruta anterior
+      await clearPolyline();
+
+      // 3. Obtener ruta optimizada de la API
+      const polylineEncoded = await crearRutaSegura(puntos);
+
+      if (!polylineEncoded) {
+        console.error("No se obtuvo ruta de la API");
+        return;
       }
-    ]);
 
-    trazoIdRef.current = polylineId[0];
-    console.log("Ruta dibujada con ID:", polylineId[0]);
+      // 5. Dibujar ruta definitiva
+      const puntosRuta = decodePolyline(polylineEncoded);
+      const polylineId = await mapInstance.current.addPolylines([
+        {
+          path: puntosRuta,
+          strokeColor: "#2E86DE", // Azul para ruta definitiva
+          strokeWeight: 4,
+          strokeOpacity: 1
+        }
+      ]);
 
-  } catch (error) {
-    console.error("Error completo al dibujar ruta:", error);
-  }
+      trazoIdRef.current = polylineId[0];
+      console.log("Ruta dibujada con ID:", polylineId[0]);
+
+    } catch (error) {
+      console.error("Error completo al dibujar ruta:", error);
+    }
 
 
-  
-};
+
+  };
 
   // --- Handlers de modal y marcadores ---
   const addCurrentLocationMarker = () => {
@@ -331,8 +319,10 @@ useEffect(() => {
   };
 
   const handleDeleteMarker = async (id: string) => {
-    await deleteMarker(id);
-    await loadMarkers();
+    const marker = markers.find(m => m.id === id);
+    if (marker) {
+      await deleteMarker(marker.id, marker.name);
+    }
   };
 
   const handleEditMarker = (marker: any) => {
@@ -347,7 +337,6 @@ useEffect(() => {
     setShowModal(false);
     setEditingMarker(null);
     setMarkerName("");
-    await loadMarkers();
   };
 
   const cleanUpMap = async () => {
@@ -361,7 +350,7 @@ useEffect(() => {
         mapInstance.current = null;
         setMapReady(false);
       }
-    } catch {}
+    } catch { }
     finally {
       circleIds.current = [];
       markerIds.current = {};
@@ -374,7 +363,6 @@ useEffect(() => {
   useEffect(() => {
     requestPermissions();
     startTracking();
-    loadMarkers();
     return () => {
       stopTracking();
       cleanUpMap();
@@ -412,17 +400,34 @@ useEffect(() => {
 
       {/* Botón de salir */}
 
-      
+
       <IonButton
-        color="danger"
-        style={{ position: "absolute", bottom: 20, left: 20, zIndex: 2000 }}
+        size="small"
+        shape="round"
+        style={{
+          '--background': '#65695b',
+          width: '48px',
+          height: '48px',
+          minWidth: '36px',
+          borderRadius: '50%',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '0',
+          position: 'absolute',
+          top: '20px',
+          right: '24px',
+          zIndex: 1100
+        }}
+        title="Salir del mapa"
         onClick={() => setShowExitConfirm(true)}
       >
-        Salir
+        <IonIcon icon={logOutOutline} color="light" />
       </IonButton>
 
       <IonModal isOpen={showExitConfirm}>
-        <div style={{ padding: 24, textAlign: "center" }}>
+        <div style={{ padding: 24, textAlign: "center", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <IonText color="danger">
             ¿Seguro que quieres salir? Se dejará de trackear tu ubicación.
           </IonText>
@@ -456,35 +461,71 @@ useEffect(() => {
           gap: "8px",
         }}
       >
-        <IonButton onClick={centerMapOnLocation} shape="round" size="small">
+
+        <IonButton
+          onClick={centerMapOnLocation}
+          shape="round" size="small"
+          style={{
+            width: "48px",
+            height: "48px",
+            minWidth: "48px",
+            borderRadius: "50%",
+            '--background': "#042940", // azul oscuro
+            boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
+          }}
+        >
           <IonIcon icon={locateOutline} />
         </IonButton>
-        <IonButton onClick={addCurrentLocationMarker} shape="round" size="small" color="warning">
+        <IonButton
+          onClick={addCurrentLocationMarker} shape="round" size="small"
+          style={{
+            width: "48px",
+            height: "48px",
+            minWidth: "48px",
+            borderRadius: "50%",
+            '--background': "#65695b",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
+          }}
+        >
           <IonIcon icon={pinOutline} />
         </IonButton>
         <IonButton
-          color="danger"
+          style={{
+            width: "48px",
+            height: "48px",
+            minWidth: "48px",
+            borderRadius: "50%",
+            '--background': "#c4391d",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            padding: "0"
+          }} shape="round" size="small"
           onClick={async () => {
-          const auth = getAuth();
-          const user = auth.currentUser;
-          if (!user) {
-             alert("Debes iniciar sesión para enviar alerta.");
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (!user) {
+              alert("Debes iniciar sesión para enviar alerta.");
               return;
-          }
-          if (!location?.coords) {
-             alert("Ubicación no disponible.");
-             return;
             }
-          const mensaje = `¡AYUDA! Necesito asistencia urgente. Esta es una alerta enviada desde SafeSteps.\nUbicación: https://maps.google.com/?q=${location.coords.latitude},${location.coords.longitude}`;
-          await notificarContactosDeConfianza(
-          user.uid,
-          mensaje
-          );
-        alert("Notificación de ayuda enviada a tus contactos de confianza.");
-  }}
->
-  🚨 SOS
-</IonButton>
+            if (!location?.coords) {
+              alert("Ubicación no disponible.");
+              return;
+            }
+            const mensaje = `¡AYUDA! Necesito asistencia urgente. Esta es una alerta enviada desde SafeSteps.\nUbicación: https://maps.google.com/?q=${location.coords.latitude},${location.coords.longitude}`;
+            await notificarContactosDeConfianza(
+              user.uid,
+              mensaje
+            );
+            alert("Notificación de ayuda enviada a tus contactos de confianza.");
+          }}
+        >
+          <IonIcon icon={warningOutline} />
+        </IonButton>
       </div>
 
       {/* Botón flotante para mostrar/ocultar la lista */}
@@ -500,51 +541,62 @@ useEffect(() => {
           size="small"
           shape="round"
           onClick={() => setShowList((v) => !v)}
-          style={{ minWidth: 0, width: 36, height: 36, padding: 0 }}
+          style={{
+            minWidth: 0,
+            width: '48px',
+            height: '48px',
+            padding: 0,
+            position: 'absolute',
+            top: '55px', // 50px debajo del botón anterior
+            right: '4px',
+            zIndex: 1100
+          }}
           color="light"
         >
           <IonIcon icon={showList ? closeOutline : listOutline} />
         </IonButton>
       </div>
-         {selectedMarkers.length === 2 && (
-  <div style={{
-    position: 'absolute',
-    bottom: '80px',
-    right: '20px',
-    zIndex: 1000
-  }}>
-    <IonButton
-      color="primary"
-      onClick={async () => {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (!user) {
-          alert("Debes iniciar sesión para notificar.");
-          return;
-        }
-        // Notifica a los contactos de confianza
-        await notificarContactosDeConfianza(
-          user.uid,
-          "¡He iniciado una ruta! Si necesitas contactarme, hazlo ahora."
-        );
-        // Dibuja la ruta
-        const seleccionados = getSelectedMarkers();
-        await dibujarRutaSeguraEnMapa(seleccionados);
-        alert("Notificación enviada a tus contactos de confianza.");
-      }}
-    >
-      <IonIcon slot="start" icon={trailSignOutline} />
-      Iniciar ruta
-    </IonButton>
-  </div>
-)}
+      {selectedMarkers.length === 2 && (
+        <div style={{
+          position: 'absolute',
+          bottom: '80px',
+          right: '20px',
+          zIndex: 1000
+        }}>
+          <IonButton
+            style={{
+              '--background': '#9ca38e' // color verde claro
+            }}
+            onClick={async () => {
+              const auth = getAuth();
+              const user = auth.currentUser;
+              if (!user) {
+                alert("Debes iniciar sesión para notificar.");
+                return;
+              }
+              // Notifica a los contactos de confianza
+              await notificarContactosDeConfianza(
+                user.uid,
+                "¡He iniciado una ruta! Si necesitas contactarme, hazlo ahora."
+              );
+              // Dibuja la ruta
+              const seleccionados = getSelectedMarkers();
+              await dibujarRutaSeguraEnMapa(seleccionados);
+              alert("Notificación enviada a tus contactos de confianza.");
+            }}
+          >
+            Iniciar ruta
+          </IonButton>
+        </div>
+      )}
 
       {/* Lista de marcadores */}
       {showList && (
         <div style={{
           position: 'absolute',
           top: '20px',
-          right: '20px',
+          right: '50px',
+          paddingTop: '95px', // espacio para el botón de la lista
           zIndex: 1000
         }}>
           <MarkerList
@@ -587,6 +639,5 @@ useEffect(() => {
       )}
     </div>
   );
-};
-
+}
 export default MapaCanchas;

@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth , setPersistence, browserLocalPersistence, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
 import { getMessaging } from "firebase/messaging";
 
 
@@ -18,7 +18,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = initializeFirestore(app, {
+  cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+});
 const messaging = getMessaging(app);
 export const googleProvider = new GoogleAuthProvider();
 

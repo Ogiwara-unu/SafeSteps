@@ -9,6 +9,7 @@ import AcercaDe from './pages/AcercaDe/acerca';
 import Mapas from './pages/Mapa';
 import { CompartirUbi } from './pages/compartirUbicacionP/compartirUbicacion';
 import UbicacionesRecibidasPage from './pages/UbicacionesRecibidas/UbicacionesRecibidas';
+import OfflineBanner from './components/OfflineBanner/OfflineBanner';
 
 
 /* Core CSS required for Ionic components to work properly */
@@ -26,6 +27,7 @@ import '@ionic/react/css/text-alignment.css';
 import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
+import { OfflineProvider } from './contexts/OfflineContext';
 
 /**
  * Ionic Dark Mode
@@ -44,40 +46,43 @@ import '@ionic/react/css/display.css';
 setupIonicReact();
 
 const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        <Route exact path="/home">
-          <Home />
-        </Route>
-        <Route exact path="/login">
-          <Login />
-        </Route>
-        <Route exact path="/register">
-          <Register />
-        </Route>
-        <Route exact path="/">
-          <Redirect to="/login" />
-        </Route>
-        <Route exact path="/config">
-        <MostrarDatosUsuario/>
-        </Route>
-        <Route exact path="/acerca">
-        <AcercaDe/>
-        </Route>
-         <Route exact path="/mapas">
-          <Mapas/>
-        </Route>
-         <Route exact path="/compartirUbicacion">
-          <CompartirUbi/>
-        </Route>
-        <Route exact path="/ubicacionesRecibidas">
-          <UbicacionesRecibidasPage/>
-        </Route>
+  <OfflineProvider>
+    <IonApp>
+      <OfflineBanner />
+      <IonReactRouter>
+        <IonRouterOutlet>
+          <Route exact path="/home">
+            <Home />
+          </Route>
+          <Route exact path="/login">
+            <Login />
+          </Route>
+          <Route exact path="/register">
+            <Register />
+          </Route>
+          <Route exact path="/">
+            <Redirect to="/login" />
+          </Route>
+          <Route exact path="/config">
+          <MostrarDatosUsuario/>
+          </Route>
+          <Route exact path="/acerca">
+          <AcercaDe/>
+          </Route>
+          <Route exact path="/mapas">
+            <Mapas/>
+          </Route>
+          <Route exact path="/compartirUbicacion">
+            <CompartirUbi/>
+          </Route>
+          <Route exact path="/ubicacionesRecibidas">
+            <UbicacionesRecibidasPage/>
+          </Route>
 
-      </IonRouterOutlet>
-    </IonReactRouter>
-  </IonApp>
+        </IonRouterOutlet>
+      </IonReactRouter>
+    </IonApp>
+  </OfflineProvider>
 );
 
 export default App;

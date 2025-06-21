@@ -1,0 +1,28 @@
+.offline-banner {
+  background: #ff9800;
+  color: #fff;
+  text-align: center;
+  padding: 8px;
+  font-weight: bold;
+  position: fixed;
+  top: 0;
+  width: 100vw;
+  z-index: 1000;
+}
+
+.offline-banner-floating {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 320px;
+  background: #ff9800;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 3000;
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0.95;
+}

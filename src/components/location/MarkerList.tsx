@@ -1,5 +1,5 @@
 import { IonButton, IonIcon } from "@ionic/react";
-import { createOutline, trashOutline, radioButtonOnOutline, radioButtonOffOutline } from "ionicons/icons";
+import { createOutline, trashOutline, radioButtonOnOutline, radioButtonOffOutline, cloudOfflineOutline } from "ionicons/icons";
 import { Marker } from "../../hooks/markers/useMarkers";
 
 interface MarkerListProps {
@@ -60,6 +60,14 @@ export const MarkerList: React.FC<MarkerListProps> = ({
                 color: "#000"
               }}>
                 {marker.name}
+                {marker.offline && (
+                  <IonIcon
+                    icon={cloudOfflineOutline}
+                    color="warning"
+                    style={{ marginLeft: 6, verticalAlign: "middle" }}
+                    title="Marcador offline, pendiente de sincronizar"
+                  />
+                )}
               </p>
               <p style={{ 
                 margin: 0, 
