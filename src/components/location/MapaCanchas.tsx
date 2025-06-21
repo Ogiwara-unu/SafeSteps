@@ -11,6 +11,7 @@ import { radioButtonOnOutline, trailSignOutline } from "ionicons/icons";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import Sidebar from "../SideBar/SideBar";
+import { notificarContactosDeConfianza } from "../../services/notification/notificarContactos"; 
 
 
 
@@ -46,6 +47,8 @@ const MapaCanchas: React.FC = () => {
   console.log("Marcadores seleccionados:", seleccionados);
   return seleccionados;
 };
+
+
 
 
 
@@ -472,9 +475,30 @@ useEffect(() => {
         <IonButton onClick={addCurrentLocationMarker} shape="round" size="small" color="warning">
           <IonIcon icon={pinOutline} />
         </IonButton>
-       <IonButton onClick={() => dibujarRutaSeguraEnMapa(getSelectedMarkers())}>
-          🛣️
-        </IonButton>
+        <IonButton
+          color="danger"
+          onClick={async () => {
+          const auth = getAuth();
+          const user = auth.currentUser;
+          if (!user) {
+             alert("Debes iniciar sesión para enviar alerta.");
+              return;
+          }
+          if (!location?.coords) {
+             alert("Ubicación no disponible.");
+             return;
+            }
+          const mensaje = `¡AYUDA! Necesito asistencia urgente. Esta es una alerta enviada desde SafeSteps.\nUbicación: https://maps.google.com/?q=${location.coords.latitude},${location.coords.longitude}`;
+          await notificarContactosDeConfianza(
+          user.uid,
+          mensaje
+          );
+        alert("Notificación de ayuda enviada a tus contactos de confianza.");
+  }}
+>
+  🚨 SOS
+</IonButton>
+
       </div>
 
       {/* Botón flotante para mostrar/ocultar la lista */}
@@ -501,27 +525,37 @@ useEffect(() => {
 
 
          {selectedMarkers.length === 2 && (
-        <div style={{
-          position: 'absolute',
-          bottom: '80px',
-          right: '20px',
-          zIndex: 1000
-        }}>
-          <IonButton 
-           // En el onClick del botón
-        onClick={async () => {
-  console.log("Iniciando creación de ruta...");
-  const seleccionados = getSelectedMarkers();
-  console.log("Puntos a enviar:", seleccionados);
-  await dibujarRutaSeguraEnMapa(seleccionados);
-  console.log("Proceso completado");
-}}
-          >
-            <IonIcon slot="start" icon={trailSignOutline} />
-            Crear Ruta
-          </IonButton>
-        </div>
-      )}
+  <div style={{
+    position: 'absolute',
+    bottom: '80px',
+    right: '20px',
+    zIndex: 1000
+  }}>
+    <IonButton
+      color="primary"
+      onClick={async () => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) {
+          alert("Debes iniciar sesión para notificar.");
+          return;
+        }
+        // Notifica a los contactos de confianza
+        await notificarContactosDeConfianza(
+          user.uid,
+          "¡He iniciado una ruta! Si necesitas contactarme, hazlo ahora."
+        );
+        // Dibuja la ruta
+        const seleccionados = getSelectedMarkers();
+        await dibujarRutaSeguraEnMapa(seleccionados);
+        alert("Notificación enviada a tus contactos de confianza.");
+      }}
+    >
+      <IonIcon slot="start" icon={trailSignOutline} />
+      Iniciar ruta
+    </IonButton>
+  </div>
+)}
 
 
       {/* Lista de marcadores */}

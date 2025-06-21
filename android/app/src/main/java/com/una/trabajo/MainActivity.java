@@ -1,4 +1,4 @@
-package com.una.trabajo;
+package com.una.safesteps;
 
 import com.getcapacitor.BridgeActivity;
 

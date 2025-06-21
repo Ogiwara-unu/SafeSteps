@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.una.trabajo"
+    namespace "com.una.safesteps"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.una.trabajo"
+        applicationId "com.una.safesteps"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

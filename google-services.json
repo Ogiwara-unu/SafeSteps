@@ -1,41 +1,33 @@
 {
   "project_info": {
-    "project_number": "1041794057493",
-    "project_id": "safesteps-1c5db",
-    "storage_bucket": "safesteps-1c5db.firebasestorage.app"
+    "project_number": "1043239362944",
+    "project_id": "safesteps-9b79e",
+    "storage_bucket": "safesteps-9b79e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1041794057493:android:592aa525ac149e86e5d51c",
+        "mobilesdk_app_id": "1:1043239362944:android:7d7d9f2332d4f6565b2165",
         "android_client_info": {
-          "package_name": "com.una.trabajo"
+          "package_name": "com.una.safesteps"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1041794057493-pjtokpunhe1lfg49651gpk517ir1gdvr.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.una.trabajo",
-            "certificate_hash": "247c0bc580335e882af1a086be39afdf0cfd343f"
-          }
-        },
-        {
-          "client_id": "1041794057493-69musketboc1j8eak0qbfmf1jsjqnub8.apps.googleusercontent.com",
+          "client_id": "1043239362944-43h5l5r7m7hfmj00l8o5ppogkcp9jeu8.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDDaLzbigTfQEI4wDbERX71wy_huSvK9FQ"
+          "current_key": "AIzaSyAz61nPc0MfdRLHNVT3EweM-rZIkZ9cJOM"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1041794057493-69musketboc1j8eak0qbfmf1jsjqnub8.apps.googleusercontent.com",
+              "client_id": "1043239362944-43h5l5r7m7hfmj00l8o5ppogkcp9jeu8.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

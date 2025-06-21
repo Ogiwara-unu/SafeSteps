@@ -1,5 +1,6 @@
 import { IonMenu, IonContent, IonList, IonItem, IonMenuToggle } from '@ionic/react';
 import './SideBar.css';
+import NotificationIcon from '../notification/notificationicon';
 
 const Sidebar = () => {
   return (
@@ -7,6 +8,7 @@ const Sidebar = () => {
       <IonContent className="menu-content">
         <IonList>
           <IonMenuToggle autoHide={false}>
+            <NotificationIcon/>
             <IonItem routerLink="/home">Inicio</IonItem>
             <IonItem routerLink="/mapas">Mapa</IonItem>
             <IonItem routerLink="/compartirUbicacion">Compartir Ubicación</IonItem>
